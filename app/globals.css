@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+body {
+  background-color: #faf8f5;
+  color: #433422;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* Warm parchment scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f5f0e8;
+}
+::-webkit-scrollbar-thumb {
+  background: #c4a77d;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8b7355;
+}
+
+/* Loading pulse animation */
+@keyframes pulse-warm {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+.animate-pulse-warm {
+  animation: pulse-warm 2s ease-in-out infinite;
+}
+
+/* Tab underline transition */
+.tab-btn {
+  position: relative;
+  padding-bottom: 0.75rem;
+  font-size: 0.875rem;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background 0.2s;
+}
+.tab-btn.active {
+  color: #433422;
+}
+.tab-btn.active::after {
+  background: #8b7355;
+}
+.tab-btn:not(.active) {
+  color: #a89880;
+}
+
+/* Expand animation */
+.topic-details {
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
