@@ -1,40 +1,49 @@
-export async function callClaude(prompt, maxTokens = 8000) {
+export async function callClaude(prompt, { maxTokens = 4096, retries = 2 } = {}) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY not configured');
-  }
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: maxTokens,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: maxTokens,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    const status = response.status;
-    if (status === 429) {
-      const retryAfter = response.headers.get('retry-after');
-      throw new Error(`RATE_LIMIT:${retryAfter || '120'}`);
+      if (res.status === 429) {
+        const retryAfter = parseInt(res.headers.get('retry-after') || '30');
+        if (attempt < retries) { await new Promise(r => setTimeout(r, retryAfter * 1000)); continue; }
+        throw new Error(`Rate limited. Try again in ${retryAfter}s.`);
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `API error ${res.status}`);
+      }
+
+      const data = await res.json();
+      return data.content?.[0]?.text || '';
+    } catch (err) {
+      if (attempt === retries) throw err;
     }
-    throw new Error(err.error?.message || `API error: ${status}`);
   }
+}
 
-  const data = await response.json();
-  const text = data.content?.map(c => c.text || '').join('') || '';
-  const cleaned = text.replace(/```json|```/g, '').trim();
-
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    throw new Error('Failed to parse AI response as JSON');
-  }
+export function parseJSON(text) {
+  let cleaned = text.trim();
+  const codeBlock = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlock) cleaned = codeBlock[1].trim();
+  const start = cleaned.indexOf('{');
+  if (start > 0) cleaned = cleaned.slice(start);
+  const end = cleaned.lastIndexOf('}');
+  if (end !== -1) cleaned = cleaned.slice(0, end + 1);
+  cleaned = cleaned.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']').replace(/[\x00-\x1F\x7F]/g, ' ');
+  return JSON.parse(cleaned);
 }
