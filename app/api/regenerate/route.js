@@ -1,17 +1,16 @@
 import { NextResponse } from 'next/server';
-import { callClaude } from '../../lib/claude';
+import { callClaude, parseJSON } from '../../lib/claude';
 import { buildRegeneratePrompt } from '../../lib/prompts';
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const body = await request.json();
+    const body = await req.json();
     const prompt = buildRegeneratePrompt(body);
-    const result = await callClaude(prompt, 4000);
-    return NextResponse.json(result);
-  } catch (error) {
-    if (error.message.startsWith('RATE_LIMIT:')) {
-      return NextResponse.json({ error: 'Rate limited. Try again shortly.' }, { status: 429 });
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const text = await callClaude(prompt);
+    const data = parseJSON(text);
+    const topic = data.topics ? data.topics[0] : data;
+    return NextResponse.json(topic);
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: err.message.includes('Rate') ? 429 : 500 });
   }
 }
