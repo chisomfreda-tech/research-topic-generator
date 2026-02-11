@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server';
-import { callClaude } from '../../lib/claude';
+import { callClaude, parseJSON } from '../../lib/claude';
 import { buildProposalPrompt } from '../../lib/prompts';
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const { topic } = await request.json();
+    const { topic } = await req.json();
     const prompt = buildProposalPrompt(topic);
-    const result = await callClaude(prompt, 6000);
-    return NextResponse.json(result);
-  } catch (error) {
-    if (error.message.startsWith('RATE_LIMIT:')) {
-      return NextResponse.json({ error: 'Rate limited.' }, { status: 429 });
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const text = await callClaude(prompt, { maxTokens: 6000 });
+    const data = parseJSON(text);
+    return NextResponse.json(data);
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: err.message.includes('Rate') ? 429 : 500 });
   }
 }
