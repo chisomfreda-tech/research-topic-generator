@@ -1,70 +1,31 @@
-# Research Topic Generator — Medical Microbiology
+# Research Topic Generator v2
 
-AI-powered tool to generate feasible experimental research topics for medical microbiology students in Lagos, Nigeria.
+AI-powered research topic generator for medical microbiology — designed for professors at Nigerian universities.
 
-## Features
-
-- **AI Topic Generation** — Uses Claude to generate context-aware, feasible research topics
-- **Focus Areas** — Plant-Based Antimicrobials, AMR, Food/Environmental, Clinical Isolates + custom
-- **Bacteria Filters** — 15 organisms including aerobes & anaerobes
-- **Budget Estimates** — Real Nigerian Naira pricing from Lagos lab suppliers
-- **Budget Cap** — Filter generation by cost ceiling (₦300K, ₦500K, ₦800K)
-- **Uniqueness Checker** — AI-powered check against existing literature
-- **Proposal Generator** — Auto-generate 2-page research proposals
-- **6 Tabs** — Generate, Approved, Budget, Suppliers, Grants, Lab Planning
-- **Lagos Suppliers** — Finlab Nigeria, Koeman, Allschoolabs, Pascal, NIMR contacts
-- **Grants Database** — TETFund, NRF, Wellcome Trust, NIH Fogarty, GARDP
-- **Lab Planning** — Gel layout optimizer, shared reagent tracking
-- **Persistent Storage** — Approved topics saved in localStorage
+## What's New in v2
+- **Warm Paper theme** — editorial cream design, easy on the eyes
+- **Equipment picker** — check actual lab equipment instead of vague "basic/intermediate/advanced"
+- **Timeline selector** — 1 month to 12 months, shapes what experiments are feasible
+- **Students tab** — upload CSV, assign topics, email students via mail client
+- **Guided walkthrough** — numbered tooltips for first-time users
+- **Collapsible sections** — all expanded by default, collapse what you don't need
 
 ## Deploy to Vercel
 
-### 1. Push to GitHub
+1. Upload to GitHub (create repo → upload files)
+2. Import to Vercel from GitHub
+3. Add environment variable: `ANTHROPIC_API_KEY`
+4. Deploy
 
-```bash
-cd research-topic-generator
-git init
-git add .
-git commit -m "Research Topic Generator"
-git remote add origin https://github.com/YOUR_USERNAME/research-topic-generator.git
-git push -u origin main
-```
-
-### 2. Deploy on Vercel
-
-1. Go to [vercel.com](https://vercel.com) and import the GitHub repo
-2. In the **Environment Variables** section, add:
-   - `ANTHROPIC_API_KEY` = your Claude API key from [console.anthropic.com](https://console.anthropic.com)
-3. Click **Deploy**
-
-Your app will be live at `research-topic-generator.vercel.app` (or your custom domain).
-
-### 3. Local Development
+## Local Development
 
 ```bash
 npm install
-cp .env.example .env.local
-# Edit .env.local and add your ANTHROPIC_API_KEY
+cp .env.example .env.local  # add your API key
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
-
-## Architecture
-
-```
-app/
-├── page.js              # Main React UI (client component)
-├── layout.js            # Root layout + metadata
-├── globals.css          # Tailwind + custom styles
-├── lib/
-│   ├── prompts.js       # All Claude prompt templates
-│   └── claude.js        # Server-side Claude API wrapper
-└── api/
-    ├── generate/route.js    # POST — batch topic generation
-    ├── regenerate/route.js  # POST — single topic regeneration
-    ├── uniqueness/route.js  # POST — uniqueness check
-    └── proposal/route.js    # POST — full proposal generation
-```
-
-The API key stays server-side in Next.js API routes — never exposed to the browser.
+## Cost
+- Vercel hosting: Free
+- Anthropic API: ~$0.03-0.05 per generation (5 topics)
+- Realistic semester: $1-5
