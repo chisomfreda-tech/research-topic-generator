@@ -120,6 +120,7 @@ Respond ONLY with valid JSON:
       "estimatedDuration": "X months",
       "uniquenessScore": 8,
       "uniquenessReason": "What makes it novel",
+      "layman": "Plain-English explanation a non-scientist would understand, 1-2 sentences. Example: 'Testing whether a traditional Nigerian plant can help existing antibiotics work better against drug-resistant bacteria found in urine infections'",
       "similarStudies": "Known similar or none",
       "supervisorNotes": "Key things to watch"
     }
