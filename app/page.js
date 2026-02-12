@@ -106,8 +106,18 @@ const TABS = [
 // ─── Hooks ───
 function usePersistedState(key, initial) {
   const [state, setState] = useState(initial);
-  useEffect(() => { try { const s = localStorage.getItem('rtg-v3-' + key); if (s) setState(JSON.parse(s)); } catch {} }, [key]);
-  useEffect(() => { try { localStorage.setItem('rtg-v3-' + key, JSON.stringify(state)); } catch {} }, [key, state]);
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem('rtg-v4-' + key);
+      if (s) {
+        const parsed = JSON.parse(s);
+        // Ensure type matches: if initial is array, parsed must be array
+        if (Array.isArray(initial) && !Array.isArray(parsed)) return;
+        if (parsed !== null && parsed !== undefined) setState(parsed);
+      }
+    } catch {}
+  }, [key]);
+  useEffect(() => { try { localStorage.setItem('rtg-v4-' + key, JSON.stringify(state)); } catch {} }, [key, state]);
   return [state, setState];
 }
 
@@ -354,7 +364,25 @@ export default function ResearchTopicGenerator() {
   );
 
   // ─── Topic Card ───
-  const TopicCard = ({ topic, index, isApproved = false }) => {
+  const TopicCard = ({ topic: rawTopic, index, isApproved = false }) => {
+    // Safety: ensure all array/object fields have defaults
+    const topic = {
+      ...rawTopic,
+      objectives: rawTopic.objectives || [],
+      materials: rawTopic.materials || [],
+      equipment: rawTopic.equipment || [],
+      keywords: rawTopic.keywords || [],
+      estimatedCost: rawTopic.estimatedCost || {},
+      statisticalAnalysis: rawTopic.statisticalAnalysis || null,
+      interviewQuestions: rawTopic.interviewQuestions || null,
+      abstractTemplate: rawTopic.abstractTemplate || null,
+      gelSharing: rawTopic.gelSharing || null,
+    };
+    if (topic.estimatedCost && !topic.estimatedCost.breakdown) topic.estimatedCost.breakdown = [];
+    if (topic.interviewQuestions) {
+      topic.interviewQuestions.consentQuestions = topic.interviewQuestions.consentQuestions || [];
+      topic.interviewQuestions.methodologyQuestions = topic.interviewQuestions.methodologyQuestions || [];
+    }
     const key = `${isApproved ? 'a' : 'g'}-${index}`;
     const isOpen = expandedTopic === key;
     const isRegen = regeneratingIdx === index && !isApproved;
@@ -392,7 +420,7 @@ export default function ResearchTopicGenerator() {
                     <p>{topic.background}</p>
                   </div>
                 )}
-                {topic.objectives?.length > 0 && (
+                {Array.isArray(topic.objectives) && topic.objectives.length > 0 && (
                   <div className="card-sec">
                     <div className="card-sec-title">Objectives</div>
                     <ol className="obj-list">
