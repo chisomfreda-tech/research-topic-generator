@@ -1,3 +1,4 @@
+export const maxDuration = 60;
 import { NextResponse } from 'next/server';
 import { callClaude, parseJSON } from '../../lib/claude';
 import { buildProposalPrompt } from '../../lib/prompts';

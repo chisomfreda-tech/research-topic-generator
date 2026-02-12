@@ -180,8 +180,12 @@ export default function ResearchTopicGenerator() {
           equipment, timeline, numTopics, maxBudget, customNotes, customFocusArea, customBacteria,
         }),
       });
-      if (!res.ok) throw new Error('Generation failed');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Generation failed (${res.status})`);
+      }
       const data = await res.json();
+      if (data.error) throw new Error(data.error);
       if (data.topics) {
         // Progressive: add topics one by one
         for (let i = 0; i < data.topics.length; i++) {

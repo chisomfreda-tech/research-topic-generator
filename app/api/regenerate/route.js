@@ -1,3 +1,4 @@
+export const maxDuration = 60;
 import { NextResponse } from 'next/server';
 import { callClaude, parseJSON } from '../../lib/claude';
 import { buildRegeneratePrompt } from '../../lib/prompts';
@@ -6,7 +7,7 @@ export async function POST(req) {
   try {
     const body = await req.json();
     const prompt = buildRegeneratePrompt(body);
-    const text = await callClaude(prompt);
+    const text = await callClaude(prompt, { maxTokens: 8192 });
     const data = parseJSON(text);
     const topic = data.topics ? data.topics[0] : data;
     return NextResponse.json(topic);

@@ -38,12 +38,35 @@ export async function callClaude(prompt, { maxTokens = 4096, retries = 2 } = {})
 
 export function parseJSON(text) {
   let cleaned = text.trim();
+  // Strip markdown code blocks
   const codeBlock = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (codeBlock) cleaned = codeBlock[1].trim();
+  // Find JSON boundaries
   const start = cleaned.indexOf('{');
   if (start > 0) cleaned = cleaned.slice(start);
   const end = cleaned.lastIndexOf('}');
   if (end !== -1) cleaned = cleaned.slice(0, end + 1);
-  cleaned = cleaned.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']').replace(/[\x00-\x1F\x7F]/g, ' ');
-  return JSON.parse(cleaned);
+  // Clean trailing commas
+  cleaned = cleaned.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+  // Fix unescaped newlines inside string values
+  cleaned = cleaned.replace(/"([^"]*?)"/g, (match) => {
+    return match.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+  });
+  // Remove other control chars
+  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ');
+  
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    // Last resort: try to extract just the topics array
+    const topicsMatch = text.match(/"topics"\s*:\s*\[([\s\S]*)\]/);
+    if (topicsMatch) {
+      try {
+        let arr = topicsMatch[1].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+        arr = arr.replace(/"([^"]*?)"/g, (m) => m.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t'));
+        return JSON.parse(`{"topics":[${arr}]}`);
+      } catch (e2) {}
+    }
+    throw new Error(`Failed to parse AI response. Please try again.`);
+  }
 }
