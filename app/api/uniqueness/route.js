@@ -5,7 +5,8 @@ import { buildUniquenessPrompt } from '../../lib/prompts';
 
 export async function POST(req) {
   try {
-    const { title } = await req.json();
+    const body = await req.json();
+    const title = body.topic?.title || body.title || '';
     const prompt = buildUniquenessPrompt(title);
     const text = await callClaude(prompt);
     const data = parseJSON(text);

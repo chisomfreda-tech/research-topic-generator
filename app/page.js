@@ -186,7 +186,7 @@ export default function ResearchTopicGenerator() {
       const res = await fetch('/api/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          areas: selectedAreas, bacteria: selectedBacteria, demographic: selectedDemographic,
+          selectedAreas, selectedBacteria, selectedDemographic: selectedDemographic,
           equipment, timeline, numTopics, maxBudget, customNotes, customFocusArea, customBacteria,
         }),
       });
