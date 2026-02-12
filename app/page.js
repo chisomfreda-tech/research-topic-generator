@@ -182,31 +182,37 @@ export default function ResearchTopicGenerator() {
     setError(null); setLoading(true); setTopics([]); setLoadingCount(0); setLoadingMsgIdx(0);
     loadingInterval.current = setInterval(() => setLoadingMsgIdx(p => (p + 1) % LOADING_MESSAGES.length), 4000);
 
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          selectedAreas, selectedBacteria, selectedDemographic: selectedDemographic,
-          equipment, timeline, numTopics, maxBudget, customNotes, customFocusArea, customBacteria,
-        }),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Generation failed (${res.status})`);
-      }
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      if (data.topics) {
-        // Progressive: add topics one by one
-        for (let i = 0; i < data.topics.length; i++) {
-          await new Promise(r => setTimeout(r, 200));
-          setTopics(prev => [...prev, data.topics[i]]);
-          setLoadingCount(i + 1);
+    const generated = [];
+    for (let i = 0; i < numTopics; i++) {
+      try {
+        const res = await fetch('/api/generate-one', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            selectedAreas, selectedBacteria, selectedDemographic: selectedDemographic,
+            equipment, timeline, numTopics: 1, maxBudget, customNotes, customFocusArea, customBacteria,
+            existingTitles: generated.map(t => t.title),
+          }),
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          // If one fails, keep going with what we have
+          console.error(`Topic ${i + 1} failed:`, errData.error);
+          continue;
         }
+        const data = await res.json();
+        if (data.topic) {
+          generated.push(data.topic);
+          setTopics([...generated]);
+          setLoadingCount(generated.length);
+        }
+      } catch (e) {
+        console.error(`Topic ${i + 1} error:`, e.message);
+        continue;
       }
-    } catch (e) { setError(e.message || 'Something went wrong'); }
+    }
     clearInterval(loadingInterval.current);
     setLoading(false);
+    if (generated.length === 0) setError('All topics failed to generate. Try again.');
   }
 
   async function regenerateTopic(idx) {
