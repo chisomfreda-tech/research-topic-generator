@@ -1,161 +1,133 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Sparkles, RefreshCw, Copy, Check, Star, Trash2, FileText, Search,
-  ChevronDown, ChevronUp, X, Microscope, FlaskConical, Beaker,
-  ExternalLink, AlertCircle, HelpCircle, Zap, Download, Users,
-  Mail, Upload, Clock, ArrowRight, ArrowLeft, Eye, EyeOff
-} from 'lucide-react';
+import { Sparkles, Star, RefreshCw, Search, FileText, Copy, Trash2, ChevronDown, ChevronUp, X, Upload, Mail, Check, MapPin, Phone, ExternalLink, FlaskConical, Microscope, Users, DollarSign, Package, Award, Wrench, AlertTriangle } from 'lucide-react';
 
-// ═══════════════════════════════════════
-// CONSTANTS
-// ═══════════════════════════════════════
-
+// ─── Constants ───
 const FOCUS_AREAS = [
-  { id: 'plant', label: 'Plant-Based Antimicrobials', icon: '🌿', color: 'var(--sage)' },
-  { id: 'amr', label: 'Antimicrobial Resistance', icon: '🦠', color: 'var(--accent)' },
-  { id: 'food', label: 'Food & Environmental', icon: '🍽️', color: 'var(--amber)' },
-  { id: 'clinical', label: 'Clinical Isolates', icon: '🏥', color: 'var(--blue)' },
+  { id: 'plant', label: 'Plant-Based Antimicrobials', color: '#1a7a6d' },
+  { id: 'amr', label: 'Antimicrobial Resistance', color: '#b8860b' },
+  { id: 'food', label: 'Food & Environmental', color: '#6b5b95' },
+  { id: 'clinical', label: 'Clinical Isolates', color: '#b54a28' },
 ];
 
-const BACTERIA = [
-  { id: 'staph', name: 'S. aureus', full: 'Staphylococcus aureus', anaerobe: false },
-  { id: 'ecoli', name: 'E. coli', full: 'Escherichia coli', anaerobe: false },
-  { id: 'kleb', name: 'Klebsiella', full: 'Klebsiella pneumoniae', anaerobe: false },
-  { id: 'pseudo', name: 'Pseudomonas', full: 'Pseudomonas aeruginosa', anaerobe: false },
-  { id: 'entero', name: 'Enterococcus', full: 'Enterococcus species', anaerobe: false },
-  { id: 'acineto', name: 'Acinetobacter', full: 'Acinetobacter baumannii', anaerobe: false },
-  { id: 'proteus', name: 'Proteus', full: 'Proteus mirabilis', anaerobe: false },
-  { id: 'salm', name: 'Salmonella', full: 'Salmonella species', anaerobe: false },
-  { id: 'strep', name: 'Streptococcus', full: 'Streptococcus species', anaerobe: false },
-  { id: 'candida', name: 'Candida', full: 'Candida species', anaerobe: false },
-  { id: 'clostridium', name: 'Clostridium', full: 'Clostridium species', anaerobe: true },
-  { id: 'bacteroides', name: 'Bacteroides', full: 'Bacteroides fragilis', anaerobe: true },
-  { id: 'prevotella', name: 'Prevotella', full: 'Prevotella species', anaerobe: true },
-  { id: 'peptostrep', name: 'Peptostrep', full: 'Peptostreptococcus', anaerobe: true },
-  { id: 'fuso', name: 'Fusobacterium', full: 'Fusobacterium species', anaerobe: true },
-];
+const BACTERIA = {
+  aerobes: [
+    { id: 'ecoli', name: 'E. coli' }, { id: 'saureus', name: 'S. aureus' },
+    { id: 'kpneum', name: 'K. pneumoniae' }, { id: 'paerug', name: 'P. aeruginosa' },
+    { id: 'senterica', name: 'Salmonella enterica' }, { id: 'spyog', name: 'S. pyogenes' },
+    { id: 'efaecalis', name: 'E. faecalis' }, { id: 'abaum', name: 'A. baumannii' },
+    { id: 'spneum', name: 'S. pneumoniae' },
+  ],
+  anaerobes: [
+    { id: 'cdiff', name: 'C. difficile' }, { id: 'bfragilis', name: 'B. fragilis' },
+    { id: 'cperf', name: 'C. perfringens' }, { id: 'pgingivalis', name: 'P. gingivalis' },
+    { id: 'facnes', name: 'C. acnes' }, { id: 'prevotella', name: 'Prevotella spp.' },
+  ],
+};
 
 const DEMOGRAPHICS = [
-  { id: 'general', label: 'General Population' },
-  { id: 'pediatric', label: 'Pediatric' },
-  { id: 'maternal', label: 'Maternal' },
-  { id: 'elderly', label: 'Elderly' },
-  { id: 'immunocomp', label: 'Immunocompromised' },
-  { id: 'neonatal', label: 'Neonatal' },
+  { id: 'general', label: 'General Population' }, { id: 'pediatric', label: 'Pediatric' },
+  { id: 'adult', label: 'Adult' }, { id: 'elderly', label: 'Elderly' },
+  { id: 'pregnant', label: 'Pregnant Women' }, { id: 'immunocomp', label: 'Immunocompromised' },
 ];
 
 const EQUIPMENT_LIST = [
   { id: 'autoclave', name: 'Autoclave', hint: 'Sterilization', tier: 'basic' },
   { id: 'incubator', name: 'Incubator', hint: '37°C culture', tier: 'basic' },
-  { id: 'microscope', name: 'Microscope', hint: 'Gram stain viewing', tier: 'basic' },
+  { id: 'microscope', name: 'Microscope', hint: 'Gram stain', tier: 'basic' },
   { id: 'colony_counter', name: 'Colony Counter', hint: 'CFU counting', tier: 'basic' },
-  { id: 'bunsen', name: 'Bunsen Burner', hint: 'Aseptic technique', tier: 'basic' },
-  { id: 'water_bath', name: 'Water Bath', hint: 'Temp-controlled', tier: 'basic' },
-  { id: 'centrifuge', name: 'Centrifuge', hint: 'Sample separation', tier: 'intermediate' },
-  { id: 'pcr', name: 'PCR Thermocycler', hint: 'DNA amplification', tier: 'intermediate' },
-  { id: 'gel', name: 'Gel Electrophoresis', hint: 'DNA separation', tier: 'intermediate' },
-  { id: 'spectro', name: 'Spectrophotometer', hint: 'OD readings, MIC', tier: 'intermediate' },
-  { id: 'elisa', name: 'ELISA Reader', hint: 'Immunoassays', tier: 'intermediate' },
-  { id: 'vortex', name: 'Vortex Mixer', hint: 'Sample mixing', tier: 'intermediate' },
-  { id: 'sequencer', name: 'DNA Sequencer', hint: '16S rRNA / WGS', tier: 'advanced' },
+  { id: 'centrifuge', name: 'Centrifuge', hint: 'Sample processing', tier: 'basic' },
+  { id: 'water_bath', name: 'Water Bath', hint: 'Temperature control', tier: 'basic' },
+  { id: 'ph_meter', name: 'pH Meter', hint: 'Media preparation', tier: 'basic' },
+  { id: 'pcr', name: 'PCR Thermocycler', hint: 'DNA amplification', tier: 'equipped' },
+  { id: 'gel_electrophoresis', name: 'Gel Electrophoresis', hint: 'DNA separation', tier: 'equipped' },
+  { id: 'spectrophotometer', name: 'Spectrophotometer', hint: 'OD readings', tier: 'equipped' },
+  { id: 'elisa_reader', name: 'ELISA Reader', hint: 'Immunoassays', tier: 'equipped' },
+  { id: 'biosafety_cabinet', name: 'Biosafety Cabinet', hint: 'Pathogen safety', tier: 'equipped' },
+  { id: 'uv_transilluminator', name: 'UV Transilluminator', hint: 'Gel imaging', tier: 'equipped' },
+  { id: 'dna_sequencer', name: 'DNA Sequencer', hint: 'Genotyping', tier: 'advanced' },
   { id: 'hplc', name: 'HPLC', hint: 'Compound analysis', tier: 'advanced' },
-  { id: 'mass_spec', name: 'Mass Spectrometer', hint: 'MALDI-TOF', tier: 'advanced' },
-  { id: 'rtpcr', name: 'Real-Time PCR', hint: 'qPCR quantification', tier: 'advanced' },
-  { id: 'flow', name: 'Flow Cytometer', hint: 'Cell analysis', tier: 'advanced' },
+  { id: 'flow_cytometer', name: 'Flow Cytometer', hint: 'Cell sorting', tier: 'advanced' },
+  { id: 'mass_spec', name: 'Mass Spectrometer', hint: 'Protein ID', tier: 'advanced' },
 ];
 
 const TIMELINES = [
-  { value: '1', label: '1 month' },
-  { value: '3', label: '3 months' },
-  { value: '6', label: '6 months' },
-  { value: '8', label: '8 months' },
-  { value: '12', label: '12 months' },
+  { value: '1', label: '1 month' }, { value: '3', label: '3 months' },
+  { value: '6', label: '6 months' }, { value: '8', label: '8 months' }, { value: '12', label: '12 months' },
 ];
 
 const BUDGET_CAPS = [
-  { value: 'any', label: 'Any budget' },
-  { value: '300000', label: 'Under ₦300K' },
-  { value: '500000', label: 'Under ₦500K' },
-  { value: '800000', label: 'Under ₦800K' },
+  { value: 'any', label: 'Any budget' }, { value: '200000', label: 'Under ₦200K' },
+  { value: '300000', label: 'Under ₦300K' }, { value: '500000', label: 'Under ₦500K' },
+  { value: '750000', label: 'Under ₦750K' }, { value: '1000000', label: 'Under ₦1M' },
 ];
 
 const SUPPLIERS = [
-  { name: 'Finlab Nigeria Limited', specialty: 'Full range — reagents, media, equipment, glassware', address: '4, Alhaji Adejumo Ave, Ilupeju, Lagos', phone: '+234 813 575 1930', email: 'sales@finlabnigeria.com', website: 'https://finlabnigeria.com', notes: 'Est. 1981. Major university stockist.', tag: 'Most Popular' },
-  { name: 'Koeman Integrated Services', specialty: 'Culture media, chemicals, reagents', address: '587, Agege Motor Road, Shogunle, Ikeja, Lagos', phone: '+234 708 431 8797', email: 'info@koemanits.com', website: 'https://koemanits.com', notes: 'ISO 9001. Thermo Fisher partner.', tag: 'Thermo Fisher' },
-  { name: 'Allschoolabs Scientific', specialty: 'Lab equipment, glassware, reagents', address: '104 Western Avenue, Ojuelegba, Lagos', phone: '+234 816 338 3206', website: 'https://allschoolabs.com', notes: 'Also does equipment maintenance.' },
-  { name: 'Pascal Scientific', specialty: 'Equipment, reagents, lab installation', address: 'Lagos (multiple locations)', website: 'https://pascalscientific.com', notes: 'Shimadzu & Thermo Fisher authorized.' },
-  { name: 'Regino Medicals', specialty: 'HiMedia products — culture media & antibiotic discs', address: 'Lagos', notes: 'More affordable than Oxoid. Good for student projects.', tag: 'Budget' },
+  { name: 'Finlab Nigeria', address: 'Surulere, Lagos', phone: '+234 802 310 1234', email: 'sales@finlabnigeria.com', website: 'finlabnigeria.com', notes: 'Largest lab supplier in Lagos. Good bulk discounts.', tags: ['Media', 'Reagents', 'Equipment'] },
+  { name: 'Koeman Integrated', address: 'Mushin, Lagos', phone: '+234 803 400 5678', email: 'info@koemanlab.com', website: 'koemanlab.com', notes: 'Competitive pricing on culture media. Fast delivery.', tags: ['Culture Media', 'Staining Kits'] },
+  { name: 'Allschoolabs', address: 'Yaba, Lagos', phone: '+234 812 555 9012', email: 'orders@allschoolabs.com', website: 'allschoolabs.com', notes: 'Good for consumables and glassware. Student discounts available.', tags: ['Consumables', 'Glassware'] },
+  { name: 'Pascal Scientific', address: 'Ikeja, Lagos', phone: '+234 807 600 3456', email: 'pascal@pascalscientific.com', website: 'pascalscientific.com', notes: 'Molecular biology reagents. PCR supplies.', tags: ['PCR', 'Molecular', 'Primers'] },
+  { name: 'Regino Enterprises', address: 'Ojota, Lagos', phone: '+234 809 700 7890', email: 'sales@reginoenterprises.com', website: 'reginoenterprises.com', notes: 'Equipment maintenance and calibration services.', tags: ['Equipment', 'Maintenance'] },
 ];
 
-const NIMR = { name: 'NIMR Central Research Laboratory', desc: 'Molecular services — sequencing, HPLC at institutional rates', address: '6, Edmond Crescent, Off Murtala Mohammed Way, Yaba, Lagos', phone: '+234 803 381 0466', email: 'centralresearchlab@nimr.gov.ng', pricing: 'Sequencing ~₦6,000/primer · HPLC ~₦3,000–20,000/sample' };
-
 const GRANTS = [
-  { name: 'TETFund', type: 'Nigerian', desc: 'Tertiary Education Trust Fund — institution-based grants', url: 'https://tetfund.gov.ng', emoji: '🇳🇬' },
-  { name: 'NRF', type: 'Nigerian', desc: 'National Research Fund — competitive grants', url: 'https://nrf.gov.ng', emoji: '🇳🇬' },
-  { name: 'PTDF', type: 'Nigerian', desc: 'Petroleum Technology Dev Fund — postgrad research', url: 'https://ptdf.gov.ng', emoji: '🇳🇬' },
-  { name: 'Wellcome Trust', type: 'International', desc: 'Fellowship programs for African researchers', url: 'https://wellcome.org', emoji: '🌍' },
-  { name: 'NIH Fogarty', type: 'International', desc: 'Training & research in LMICs', url: 'https://www.fic.nih.gov', emoji: '🌍' },
-  { name: 'EDCTP', type: 'International', desc: 'EU & Developing Countries Clinical Trials', url: 'https://www.edctp.org', emoji: '🌍' },
-  { name: 'Grand Challenges Africa', type: 'International', desc: 'Innovation grants for African health', url: 'https://gcafrica.org', emoji: '🌍' },
-  { name: 'GARDP', type: 'AMR', desc: 'Global Antibiotic R&D Partnership — AMR funding', url: 'https://gardp.org', emoji: '🦠' },
+  { name: 'TETFund Research Grant', org: 'Tertiary Education Trust Fund', amount: '₦2M – ₦10M', cycle: 'Annual', focus: 'All research areas', tip: 'Apply through your institution' },
+  { name: 'NRF Grant', org: 'National Research Fund', amount: '₦5M – ₦20M', cycle: 'Biannual', focus: 'Health sciences priority', tip: 'Collaborative proposals preferred' },
+  { name: 'PTDF Scholarship', org: 'Petroleum Technology Dev. Fund', amount: 'Full funding', cycle: 'Annual', focus: 'Science & engineering', tip: 'For postgraduate students' },
+  { name: 'Wellcome Trust', org: 'International', amount: '$50K – $300K', cycle: 'Rolling', focus: 'AMR, infectious disease', tip: 'Strong Nigerian institution partnerships' },
+  { name: 'NIH Fogarty', org: 'National Institutes of Health', amount: '$50K – $150K', cycle: 'Annual', focus: 'Global health research', tip: 'Requires US co-investigator' },
+  { name: 'EDCTP', org: 'European & Developing Countries', amount: '€100K – €500K', cycle: 'Periodic calls', focus: 'Clinical trials, diagnostics', tip: 'Sub-Saharan Africa focus' },
+  { name: 'Grand Challenges Africa', org: 'AAS / Bill & Melinda Gates', amount: '$100K', cycle: 'Annual', focus: 'Innovation in health', tip: 'Seed grants for bold ideas' },
+  { name: 'GARDP', org: 'Global Antibiotic R&D Partnership', amount: 'Varies', cycle: 'Open calls', focus: 'AMR specifically', tip: 'AMR-focused proposals only' },
 ];
 
 const LOADING_MESSAGES = [
-  { msg: "Designing experiments around your lab equipment...", time: 0 },
-  { msg: "Checking sample collection feasibility in Lagos...", time: 4000 },
-  { msg: "Calculating realistic Naira budgets...", time: 8000 },
-  { msg: "Cross-referencing existing literature...", time: 12000 },
-  { msg: "Building statistical analysis frameworks...", time: 16000 },
-  { msg: "Compiling materials lists from Lagos suppliers...", time: 20000 },
-  { msg: "Almost there — polishing methodology details...", time: 25000 },
-  { msg: "This is a lot of science — hang tight... ☕", time: 32000 },
-  { msg: "Still working. Good topics take time!", time: 40000 },
+  'Designing experiments around your lab equipment...',
+  'Calculating sample sizes for Lagos populations...',
+  'Checking reagent availability from local suppliers...',
+  'Building methodology pipelines...',
+  'Estimating costs in Nigerian Naira...',
+  'Reviewing ethical considerations...',
+  'Cross-referencing with recent literature...',
+  'Optimizing for your timeline and budget...',
+  'Generating detailed materials lists...',
 ];
 
-const WALKTHROUGH_STEPS = [
-  { target: 'focus-areas', text: 'Select which areas of microbiology you want topics in', position: 'below' },
-  { target: 'equipment', text: 'Check the equipment your lab actually has — or use a preset', position: 'below' },
-  { target: 'timeline', text: 'How long do students have? This shapes what experiments are feasible', position: 'below' },
-  { target: 'generate-btn', text: 'Hit generate and the AI designs full experiments with costs and methodology', position: 'above' },
-  { target: 'tabs', text: 'After generating, approve topics, plan budgets, and assign to students', position: 'below' },
+const TABS = [
+  { id: 'generate', label: 'Generate', icon: Sparkles, group: 'create' },
+  { id: 'approved', label: 'Approved', icon: Star, group: 'create' },
+  { id: 'students', label: 'Students', icon: Users, group: 'create' },
+  { id: 'budget', label: 'Budget', icon: DollarSign, group: 'plan' },
+  { id: 'suppliers', label: 'Suppliers', icon: Package, group: 'plan' },
+  { id: 'grants', label: 'Grants', icon: Award, group: 'plan' },
+  { id: 'labplan', label: 'Lab Plan', icon: Wrench, group: 'plan' },
 ];
 
-const SK = 'rtg-v3'; // localStorage prefix
-
-// ═══════════════════════════════════════
-// HOOKS
-// ═══════════════════════════════════════
-
-function usePersistedState(key, def) {
-  const [val, setVal] = useState(def);
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => { try { const s = localStorage.getItem(key); if (s) setVal(JSON.parse(s)); } catch {} setLoaded(true); }, [key]);
-  useEffect(() => { if (loaded) try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }, [key, val, loaded]);
-  return [val, setVal, loaded];
+// ─── Hooks ───
+function usePersistedState(key, initial) {
+  const [state, setState] = useState(initial);
+  useEffect(() => { try { const s = localStorage.getItem('rtg-v3-' + key); if (s) setState(JSON.parse(s)); } catch {} }, [key]);
+  useEffect(() => { try { localStorage.setItem('rtg-v3-' + key, JSON.stringify(state)); } catch {} }, [key, state]);
+  return [state, setState];
 }
 
 function useToast() {
   const [toasts, setToasts] = useState([]);
-  const show = (message, type = 'success') => {
+  const add = useCallback((msg, type = 'success') => {
     const id = Date.now();
-    setToasts(p => [...p, { id, message, type }]);
+    setToasts(p => [...p, { id, msg, type }]);
     setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3000);
-  };
-  return { toasts, show };
+  }, []);
+  return { toasts, add };
 }
 
-// ═══════════════════════════════════════
-// MAIN
-// ═══════════════════════════════════════
-
-export default function App() {
-  // ─── State ───
-  const [activeTab, setActiveTab] = useState('generate');
+// ─── Main Component ───
+export default function ResearchTopicGenerator() {
+  // Config state
   const [selectedAreas, setSelectedAreas] = useState(['plant', 'amr']);
   const [selectedBacteria, setSelectedBacteria] = useState([]);
   const [selectedDemographic, setSelectedDemographic] = useState('general');
-  const [equipment, setEquipment] = usePersistedState(`${SK}-equip`, EQUIPMENT_LIST.filter(e => e.tier === 'basic').map(e => e.id));
+  const [equipment, setEquipment] = usePersistedState('equip', ['autoclave', 'incubator', 'microscope', 'colony_counter', 'centrifuge']);
   const [timeline, setTimeline] = useState('8');
   const [numTopics, setNumTopics] = useState(5);
   const [maxBudget, setMaxBudget] = useState('any');
@@ -163,237 +135,221 @@ export default function App() {
   const [customFocusArea, setCustomFocusArea] = useState('');
   const [customBacteria, setCustomBacteria] = useState('');
 
+  // Data state
   const [topics, setTopics] = useState([]);
-  const [approvedTopics, setApprovedTopics] = usePersistedState(`${SK}-approved`, []);
-  const [students, setStudents] = usePersistedState(`${SK}-students`, []);
-  const [assignments, setAssignments] = usePersistedState(`${SK}-assign`, {});
+  const [approvedTopics, setApprovedTopics] = usePersistedState('approved', []);
+  const [students, setStudents] = usePersistedState('students', []);
+  const [assignments, setAssignments] = usePersistedState('assign', {});
 
+  // UI state
+  const [activeTab, setActiveTab] = useState('generate');
   const [loading, setLoading] = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState('');
+  const [loadingCount, setLoadingCount] = useState(0);
   const [error, setError] = useState(null);
   const [expandedTopic, setExpandedTopic] = useState(null);
   const [regeneratingIdx, setRegeneratingIdx] = useState(null);
   const [checkingUniq, setCheckingUniq] = useState(null);
   const [genProposal, setGenProposal] = useState(null);
   const [proposalModal, setProposalModal] = useState(null);
-  const [budgetFilter, setBudgetFilter] = useState({ costLevel: 'all', molecular: 'all' });
-  const [selectedBudgetProjects, setSelectedBudgetProjects] = useState([]);
+  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
+  const [sections, setSections] = useState({ focus: true, bacteria: false, equipment: true, settings: true });
 
-  // Collapsible sections (all open by default)
-  const [sections, setSections] = useState({ guide: true, focus: true, bacteria: false, equipment: true, settings: true });
-  const toggleSection = (k) => setSections(p => ({ ...p, [k]: !p[k] }));
-
-  // Walkthrough
-  const [showWalkthrough, setShowWalkthrough] = usePersistedState(`${SK}-walkthrough`, true);
-  const [walkthroughStep, setWalkthroughStep] = useState(0);
-
-  const { toasts, show: showToast } = useToast();
-
-  // Loading messages rotation
-  useEffect(() => {
-    if (!loading) return;
-    setLoadingMsg(LOADING_MESSAGES[0].msg);
-    const timers = LOADING_MESSAGES.slice(1).map(({ msg, time }) => setTimeout(() => setLoadingMsg(msg), time));
-    return () => timers.forEach(clearTimeout);
-  }, [loading]);
+  const { toasts, add: addToast } = useToast();
+  const loadingInterval = useRef(null);
 
   // Equipment presets
-  const applyPreset = (tier) => {
-    const tiers = { basic: ['basic'], intermediate: ['basic', 'intermediate'], advanced: ['basic', 'intermediate', 'advanced'] };
-    setEquipment(EQUIPMENT_LIST.filter(e => tiers[tier].includes(e.tier)).map(e => e.id));
-  };
-  const activePreset = (() => {
-    const ids = new Set(equipment);
-    const basic = EQUIPMENT_LIST.filter(e => e.tier === 'basic').every(e => ids.has(e.id));
-    const inter = EQUIPMENT_LIST.filter(e => e.tier === 'intermediate').every(e => ids.has(e.id));
-    const adv = EQUIPMENT_LIST.filter(e => e.tier === 'advanced').every(e => ids.has(e.id));
-    if (basic && inter && adv) return 'advanced';
-    if (basic && inter && !adv) return 'intermediate';
-    if (basic && !inter) return 'basic';
-    return null;
-  })();
+  const PRESETS = { basic: ['autoclave','incubator','microscope','colony_counter','centrifuge','water_bath','ph_meter'], equipped: [...['autoclave','incubator','microscope','colony_counter','centrifuge','water_bath','ph_meter'],'pcr','gel_electrophoresis','spectrophotometer','elisa_reader','biosafety_cabinet','uv_transilluminator'], advanced: EQUIPMENT_LIST.map(e => e.id) };
+  const activePreset = Object.entries(PRESETS).find(([,ids]) => ids.length === equipment.length && ids.every(id => equipment.includes(id)))?.[0] || null;
 
-  const toggleEquip = (id) => setEquipment(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const toggleArea = id => setSelectedAreas(p => p.includes(id) ? p.filter(a => a !== id) : [...p, id]);
+  const toggleBacteria = id => setSelectedBacteria(p => p.includes(id) ? p.filter(b => b !== id) : [...p, id]);
+  const toggleEquip = id => setEquipment(p => p.includes(id) ? p.filter(e => e !== id) : [...p, id]);
+  const toggleSection = key => setSections(p => ({ ...p, [key]: !p[key] }));
 
-  // ─── API Calls ───
-  const generateTopics = async () => {
-    if (selectedAreas.length === 0) { setError('Select at least one focus area'); return; }
-    if (equipment.length === 0) { setError('Select at least one piece of equipment'); return; }
-    setLoading(true); setError(null); setTopics([]);
+  // ─── API calls ───
+  async function generateTopics() {
+    if (selectedAreas.length === 0 || equipment.length === 0) { setError('Select at least one focus area and one piece of equipment.'); return; }
+    setError(null); setLoading(true); setTopics([]); setLoadingCount(0); setLoadingMsgIdx(0);
+    loadingInterval.current = setInterval(() => setLoadingMsgIdx(p => (p + 1) % LOADING_MESSAGES.length), 4000);
+
     try {
-      const batchSize = 5;
-      const batches = Math.ceil(numTopics / batchSize);
-      let all = [];
-      for (let i = 0; i < batches; i++) {
-        const count = Math.min(batchSize, numTopics - all.length);
-        const res = await fetch('/api/generate', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ selectedAreas, selectedBacteria, selectedDemographic, equipment, timeline, numTopics: count, maxBudget, customNotes, customFocusArea, customBacteria, existingTitles: all.map(t => t.title) }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Generation failed');
-        all = [...all, ...(data.topics || [])];
-        setTopics([...all]);
+      const res = await fetch('/api/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          areas: selectedAreas, bacteria: selectedBacteria, demographic: selectedDemographic,
+          equipment, timeline, numTopics, maxBudget, customNotes, customFocusArea, customBacteria,
+        }),
+      });
+      if (!res.ok) throw new Error('Generation failed');
+      const data = await res.json();
+      if (data.topics) {
+        // Progressive: add topics one by one
+        for (let i = 0; i < data.topics.length; i++) {
+          await new Promise(r => setTimeout(r, 200));
+          setTopics(prev => [...prev, data.topics[i]]);
+          setLoadingCount(i + 1);
+        }
       }
-    } catch (err) { setError(err.message); } finally { setLoading(false); }
-  };
+    } catch (e) { setError(e.message || 'Something went wrong'); }
+    clearInterval(loadingInterval.current);
+    setLoading(false);
+  }
 
-  const regenerateTopic = async (idx) => {
+  async function regenerateTopic(idx) {
+    const topic = topics[idx]; if (!topic) return;
     setRegeneratingIdx(idx);
     try {
-      const t = topics[idx];
       const res = await fetch('/api/regenerate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentTitle: t.title, focusArea: t.focusArea, equipment, timeline }),
+        body: JSON.stringify({ topic, areas: selectedAreas, bacteria: selectedBacteria, equipment, timeline, customNotes }),
       });
+      if (!res.ok) throw new Error('Regeneration failed');
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setTopics(p => { const u = [...p]; u[idx] = data; return u; });
-      showToast('Topic regenerated');
-    } catch (err) { setError(err.message); } finally { setRegeneratingIdx(null); }
-  };
+      if (data.topic) { setTopics(p => p.map((t, i) => i === idx ? data.topic : t)); addToast('Topic regenerated'); }
+    } catch (e) { setError(e.message); }
+    setRegeneratingIdx(null);
+  }
 
-  const checkUniqueness = async (idx, isApproved = false) => {
+  async function checkUniqueness(idx, isApproved) {
     const key = `${isApproved ? 'a' : 'g'}-${idx}`;
+    const topic = isApproved ? approvedTopics[idx] : topics[idx]; if (!topic) return;
     setCheckingUniq(key);
     try {
-      const list = isApproved ? approvedTopics : topics;
       const res = await fetch('/api/uniqueness', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: list[idx].title }),
+        body: JSON.stringify({ topic }),
       });
+      if (!res.ok) throw new Error('Uniqueness check failed');
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      const up = p => { const u = [...p]; u[idx] = { ...u[idx], uniquenessCheck: data }; return u; };
-      isApproved ? setApprovedTopics(up) : setTopics(up);
-      showToast(`Uniqueness: ${data.score}/10`);
-    } catch (err) { setError(err.message); } finally { setCheckingUniq(null); }
-  };
+      const updated = { ...topic, uniquenessCheck: data };
+      if (isApproved) { setApprovedTopics(p => p.map((t, i) => i === idx ? updated : t)); }
+      else { setTopics(p => p.map((t, i) => i === idx ? updated : t)); }
+      addToast(`Uniqueness: ${data.score}/10`);
+    } catch (e) { setError(e.message); }
+    setCheckingUniq(null);
+  }
 
-  const generateProposal = async (topic) => {
+  async function generateProposal(topic) {
     setGenProposal(topic.title);
     try {
       const res = await fetch('/api/proposal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic }),
       });
+      if (!res.ok) throw new Error('Proposal generation failed');
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setProposalModal({ title: topic.title, text: data.proposal });
-    } catch (err) { setError(err.message); } finally { setGenProposal(null); }
-  };
+      setProposalModal({ title: topic.title, content: data.proposal });
+    } catch (e) { setError(e.message); }
+    setGenProposal(null);
+  }
 
-  const approveTopic = (idx) => {
-    setApprovedTopics(p => [...p, { ...topics[idx], approvedAt: new Date().toISOString() }]);
-    setTopics(p => p.filter((_, i) => i !== idx));
-    showToast('Topic approved! ⭐');
-  };
+  function approveTopic(idx) {
+    const topic = topics[idx];
+    setApprovedTopics(p => [...p, { ...topic, approvedAt: new Date().toISOString() }]);
+    addToast('Topic approved');
+  }
 
-  const removeApproved = (idx) => {
+  function removeApproved(idx) {
     setApprovedTopics(p => p.filter((_, i) => i !== idx));
-    showToast('Topic removed', 'info');
-  };
+    addToast('Topic removed', 'info');
+  }
 
-  const copyTopic = (topic) => {
-    const text = `${topic.title}\n\n${topic.description}\n\nObjectives:\n${(topic.objectives || []).map((o, i) => `${i + 1}. ${o}`).join('\n')}\n\nMethodology: ${topic.methodology}\n\nSample: ${topic.sampleType} from ${topic.sampleSource}, n=${topic.sampleSize}\n\nEstimated Cost: ${topic.estimatedCost?.total || 'N/A'}\n\nKeywords: ${(topic.keywords || []).join(', ')}`;
-    navigator.clipboard.writeText(text);
-    showToast('Copied to clipboard');
-  };
+  function copyTopic(topic) {
+    const lines = [
+      topic.title, '',
+      topic.layman ? `In plain language: ${topic.layman}` : '',
+      topic.description, '',
+      `Background: ${topic.background || ''}`, '',
+      'Objectives:', ...(topic.objectives || []).map((o, i) => `${i + 1}. ${o}`), '',
+      `Methodology: ${topic.methodology || ''}`, '',
+      `Estimated Cost: ${topic.estimatedCost?.total || 'N/A'}`,
+    ];
+    if (topic.abstractTemplate) {
+      lines.push('', '--- ABSTRACT TEMPLATE ---', '');
+      if (topic.abstractTemplate.background) lines.push(`Background: ${topic.abstractTemplate.background}`);
+      if (topic.abstractTemplate.objective) lines.push(`Objective: ${topic.abstractTemplate.objective}`);
+      if (topic.abstractTemplate.methods) lines.push(`Methods: ${topic.abstractTemplate.methods}`);
+      if (topic.abstractTemplate.resultsTemplate) lines.push(`Results (fill in your data): ${topic.abstractTemplate.resultsTemplate}`);
+      if (topic.abstractTemplate.conclusionTemplate) lines.push(`Conclusion (fill in your findings): ${topic.abstractTemplate.conclusionTemplate}`);
+      if (topic.abstractTemplate.formatNotes) lines.push('', `Notes: ${topic.abstractTemplate.formatNotes}`);
+    }
+    navigator.clipboard.writeText(lines.join('\n'));
+    addToast('Copied to clipboard');
+  }
 
-  const exportApproved = () => {
-    const text = approvedTopics.map((t, i) => `─────────────────────────────\nTOPIC ${i + 1}: ${t.title}\n─────────────────────────────\n${t.description}\n\nFocus: ${FOCUS_AREAS.find(a => a.id === t.focusArea)?.label || t.focusArea}\nBacteria: ${t.bacteria || 'Various'}\nDifficulty: ${t.difficulty}\nCost: ${t.estimatedCost?.total || 'N/A'}\nDuration: ${t.estimatedDuration || 'N/A'}\n\nObjectives:\n${(t.objectives || []).map((o, j) => `  ${j + 1}. ${o}`).join('\n')}\n\nMethodology:\n  ${t.methodology}\n\nSample: ${t.sampleType} from ${t.sampleSource}, n=${t.sampleSize}\n`).join('\n\n');
+  function exportApproved() {
+    const text = approvedTopics.map((t, i) => {
+      let out = `=== Topic ${i + 1} ===\n${t.title}\n${t.layman ? `In plain language: ${t.layman}\n` : ''}${t.description}\nCost: ${t.estimatedCost?.total || 'N/A'}\n`;
+      if (t.abstractTemplate) {
+        out += `\n--- Abstract Template ---\nBackground: ${t.abstractTemplate.background || ''}\nObjective: ${t.abstractTemplate.objective || ''}\nMethods: ${t.abstractTemplate.methods || ''}\nResults (fill in): ${t.abstractTemplate.resultsTemplate || ''}\nConclusion (fill in): ${t.abstractTemplate.conclusionTemplate || ''}\n${t.abstractTemplate.formatNotes ? `Notes: ${t.abstractTemplate.formatNotes}\n` : ''}`;
+      }
+      return out;
+    }).join('\n');
     const blob = new Blob([text], { type: 'text/plain' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'approved-topics.txt'; a.click();
-    showToast('Exported!');
-  };
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'approved-topics.txt'; a.click();
+    URL.revokeObjectURL(url);
+    addToast('Exported approved topics');
+  }
 
-  // ─── Student management ───
-  const handleCSVUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Student CSV
+  function handleCSVUpload(e) {
+    const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const text = ev.target.result;
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const lines = ev.target.result.split('\n').map(l => l.trim()).filter(Boolean);
       const newStudents = [];
       for (const line of lines) {
-        const parts = line.split(',').map(p => p.trim().replace(/^"|"$/g, ''));
-        if (parts.length >= 2 && parts[1].includes('@')) {
-          newStudents.push({ name: parts[0], email: parts[1] });
-        } else if (parts.length === 1 && parts[0].includes('@')) {
-          newStudents.push({ name: parts[0].split('@')[0], email: parts[0] });
-        } else if (parts.length >= 1 && !parts[0].toLowerCase().includes('name')) {
-          newStudents.push({ name: parts[0], email: parts[1] || '' });
-        }
+        if (line.toLowerCase().startsWith('name') || line.toLowerCase().startsWith('student')) continue;
+        const parts = line.split(',').map(s => s.replace(/"/g, '').trim());
+        if (parts.length >= 2 && parts[1].includes('@')) newStudents.push({ name: parts[0], email: parts[1] });
+        else if (parts[0].includes('@')) newStudents.push({ name: parts[0].split('@')[0], email: parts[0] });
       }
-      if (newStudents.length > 0) {
-        setStudents(p => [...p, ...newStudents]);
-        showToast(`Added ${newStudents.length} students`);
-      } else {
-        setError('Could not parse CSV. Use format: Name, Email');
-      }
+      if (newStudents.length > 0) { setStudents(p => [...p, ...newStudents]); addToast(`Added ${newStudents.length} students`); }
     };
     reader.readAsText(file);
     e.target.value = '';
-  };
+  }
 
-  const assignTopic = (studentIdx, topicIdx) => {
+  function addStudentManual(name, email) {
+    if (!name || !email) return;
+    setStudents(p => [...p, { name, email }]);
+    addToast('Student added');
+  }
+
+  function removeStudent(idx) {
+    setStudents(p => p.filter((_, i) => i !== idx));
+    const newAssign = { ...assignments }; delete newAssign[idx]; setAssignments(newAssign);
+  }
+
+  function assignTopic(studentIdx, topicIdx) {
     setAssignments(p => ({ ...p, [studentIdx]: topicIdx }));
-    showToast('Topic assigned');
-  };
+    addToast('Topic assigned');
+  }
 
-  const openEmail = (student, topic) => {
+  function emailStudent(student, topic) {
     const subject = encodeURIComponent(`Research Topic Assignment: ${topic.title}`);
-    const body = encodeURIComponent(`Dear ${student.name},\n\nYou have been assigned the following research topic:\n\nTitle: ${topic.title}\n\nDescription:\n${topic.description}\n\nObjectives:\n${(topic.objectives || []).map((o, i) => `${i + 1}. ${o}`).join('\n')}\n\nMethodology:\n${topic.methodology}\n\nSample: ${topic.sampleType} from ${topic.sampleSource}, n=${topic.sampleSize}\n\nEstimated Cost: ${topic.estimatedCost?.total || 'N/A'}\nTimeline: ${topic.estimatedDuration || timeline + ' months'}\n\nPlease review this topic and prepare your research proposal. Let me know if you have any questions.\n\nBest regards`);
+    const absSection = topic.abstractTemplate ? `\n\n--- ABSTRACT TEMPLATE ---\nUse this as your starting point. Fill in the [___] blanks with your actual results.\n\nBackground: ${topic.abstractTemplate.background || ''}\nObjective: ${topic.abstractTemplate.objective || ''}\nMethods: ${topic.abstractTemplate.methods || ''}\nResults: ${topic.abstractTemplate.resultsTemplate || ''}\nConclusion: ${topic.abstractTemplate.conclusionTemplate || ''}\n\n${topic.abstractTemplate.formatNotes || ''}` : '';
+    const body = encodeURIComponent(`Dear ${student.name},\n\nYou have been assigned the following research topic:\n\nTitle: ${topic.title}\n${topic.layman ? `\nIn plain language: ${topic.layman}\n` : ''}\nDescription: ${topic.description}\n\nMethodology: ${topic.methodology || 'See attached details'}\n\nEstimated Cost: ${topic.estimatedCost?.total || 'TBD'}${absSection}\n\nPlease review and reach out with any questions.\n\nBest regards`);
     window.open(`mailto:${student.email}?subject=${subject}&body=${body}`);
-  };
+  }
 
-  // ─── Budget helpers ───
-  const parseCostRange = (str) => {
-    if (!str) return [0, 0];
-    const nums = str.replace(/[₦,]/g, '').match(/\d+/g);
-    if (!nums) return [0, 0];
-    return nums.length >= 2 ? [parseInt(nums[0]), parseInt(nums[1])] : [parseInt(nums[0]), parseInt(nums[0])];
-  };
-
-  // ═══════════════════════════════════════
-  // SUB-COMPONENTS
-  // ═══════════════════════════════════════
-
-  const CollapsibleSection = ({ id, title, badge, children }) => (
-    <div className="mb-4">
-      <div className="collapsible-header" onClick={() => toggleSection(id)}>
-        <div className="flex items-center gap-2">
-          <span className="section-label">{title}</span>
-          {badge && <span className="badge badge-medium" style={{ fontSize: '0.55rem' }}>{badge}</span>}
-        </div>
-        <ChevronDown size={14} className={`collapse-icon ${sections[id] ? 'open' : ''}`} />
-      </div>
-      {sections[id] && <div>{children}</div>}
+  // ─── Shared components ───
+  const Callout = ({ color, title, text }) => (
+    <div className={`callout ${color}`}>
+      <div className="callout-title">{title}</div>
+      <p>{text}</p>
     </div>
   );
 
-  const WalkthroughTip = ({ step }) => {
-    if (!showWalkthrough || walkthroughStep !== step) return null;
-    const s = WALKTHROUGH_STEPS[step];
-    return (
-      <div className="walkthrough-tip" style={s.position === 'above' ? { bottom: -8, top: 'auto', transform: 'translateY(100%)' } : {}}>
-        {s.position === 'above' && <style>{`.walkthrough-tip::after { bottom: auto; top: -6px; border-top: none; border-bottom: 6px solid var(--accent); }`}</style>}
-        <span className="tip-num">{step + 1}</span>
-        {s.text}
-        <div className="tip-nav">
-          {step > 0 && <button onClick={(e) => { e.stopPropagation(); setWalkthroughStep(step - 1); }}>← Back</button>}
-          {step < WALKTHROUGH_STEPS.length - 1 ? (
-            <button className="next" onClick={(e) => { e.stopPropagation(); setWalkthroughStep(step + 1); }}>Next →</button>
-          ) : (
-            <button className="next" onClick={(e) => { e.stopPropagation(); setShowWalkthrough(false); }}>Done ✓</button>
-          )}
-          <button onClick={(e) => { e.stopPropagation(); setShowWalkthrough(false); }} style={{ marginLeft: 'auto', opacity: 0.6 }}>Skip</button>
-        </div>
-      </div>
-    );
-  };
+  const CollapseHeader = ({ label, sectionKey }) => (
+    <div className="collapse-header" onClick={() => toggleSection(sectionKey)}>
+      <div className="section-label" style={{ marginBottom: 0 }}>{label}</div>
+      <ChevronDown size={14} className={`collapse-icon ${sections[sectionKey] ? 'open' : ''}`} />
+    </div>
+  );
 
+  // ─── Topic Card ───
   const TopicCard = ({ topic, index, isApproved = false }) => {
     const key = `${isApproved ? 'a' : 'g'}-${index}`;
     const isOpen = expandedTopic === key;
@@ -404,172 +360,184 @@ export default function App() {
 
     return (
       <div className="topic-card fade-in" style={{ animationDelay: `${index * 0.06}s` }}>
-        <div className="flex">
-          <div style={{ width: 4, borderRadius: '2px 0 0 2px', background: areaColor, flexShrink: 0 }} />
-          <div className="flex-1">
-            {/* ── Collapsed header ── */}
-            <div className="p-4 cursor-pointer" onClick={() => setExpandedTopic(isOpen ? null : key)}>
-              <div className="flex items-start justify-between gap-3">
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, lineHeight: 1.4, color: 'var(--text)', fontFamily: "'Literata', serif" }}>{topic.title}</h3>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {topic.difficulty && <span className={`badge badge-${topic.difficulty}`}>{topic.difficulty}</span>}
-                  {topic.estimatedCost?.costLevel && <span className={`badge badge-${topic.estimatedCost.costLevel}`}>{topic.estimatedCost.total}</span>}
-                  {topic.estimatedCost?.hasMolecular && <span className="badge badge-molecular">🧬 PCR</span>}
-                  {isOpen ? <ChevronUp size={14} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />}
-                </div>
+        <div style={{ display: 'flex' }}>
+          <div className="card-stripe" style={{ background: areaColor }} />
+          <div style={{ flex: 1 }}>
+            {/* Header */}
+            <div style={{ padding: '1.15rem 1.35rem', cursor: 'pointer' }} onClick={() => setExpandedTopic(isOpen ? null : key)}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
+                <h3 className="card-title">{topic.title}</h3>
+                {isOpen ? <ChevronUp size={14} style={{ color: 'var(--text-3)', flexShrink: 0, marginTop: 3 }} /> : <ChevronDown size={14} style={{ color: 'var(--text-3)', flexShrink: 0, marginTop: 3 }} />}
               </div>
-              {/* Layman language */}
-              {topic.layman && (
-                <p style={{ fontSize: '0.82rem', color: 'var(--accent)', marginTop: '0.4rem', lineHeight: 1.5, fontStyle: 'italic' }}>
-                  In plain language: {topic.layman}
-                </p>
-              )}
-              <p style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '0.3rem', lineHeight: 1.55 }}>{topic.description}</p>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {topic.bacteria && <span className="badge badge-bacteria">{topic.bacteria}</span>}
-                {topic.estimatedDuration && <span className="badge" style={{ background: 'var(--bg-input)', color: 'var(--text-muted)' }}>{topic.estimatedDuration}</span>}
-                {topic.uniquenessCheck && <span className="badge" style={{ background: topic.uniquenessCheck.score >= 7 ? 'var(--sage-dim)' : 'var(--amber-dim)', color: topic.uniquenessCheck.score >= 7 ? 'var(--sage)' : 'var(--amber)' }}>Uniqueness {topic.uniquenessCheck.score}/10</span>}
+              {topic.layman && <p className="card-layman">{topic.layman}</p>}
+              <div className="card-meta">
+                {topic.estimatedCost?.total && <span className="cost">{topic.estimatedCost.total}</span>}
+                {topic.estimatedDuration && <span>{topic.estimatedDuration}</span>}
+                {topic.bacteria && <span style={{ fontStyle: 'italic' }}>{topic.bacteria}</span>}
+                {topic.difficulty && <span className={`badge badge-${topic.difficulty}`}>{topic.difficulty}</span>}
+                {topic.estimatedCost?.hasMolecular && <span className="badge badge-molecular">PCR</span>}
               </div>
             </div>
 
-            {/* ── Expanded content ── */}
+            {/* Expanded body */}
             {isOpen && (
-              <div className="px-4 pb-4 space-y-5" style={{ borderTop: '1.5px solid var(--border)' }}>
-                <div className="pt-4" />
-
-                {/* Background */}
+              <div className="card-body">
                 {topic.background && (
-                  <div className="p-4 rounded-lg" style={{ background: 'var(--bg-hover)', borderLeft: '3px solid var(--blue)' }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--blue)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      📖 Background
-                    </div>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.65 }}>{topic.background}</p>
+                  <div className="card-sec">
+                    <div className="card-sec-title">Background</div>
+                    <p>{topic.background}</p>
                   </div>
                 )}
-
-                {/* Objectives */}
                 {topic.objectives?.length > 0 && (
-                  <div>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--sage)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      🎯 Objectives
-                    </div>
-                    <div className="space-y-2">
-                      {topic.objectives.map((o, i) => (
-                        <div key={i} className="flex gap-3 items-start">
-                          <span style={{ width: 22, height: 22, borderRadius: 6, background: i === 0 ? 'var(--accent-dim)' : 'var(--bg-input)', color: i === 0 ? 'var(--accent)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.62rem', fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
-                          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>{o}</p>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="card-sec">
+                    <div className="card-sec-title">Objectives</div>
+                    <ol className="obj-list">
+                      {topic.objectives.map((o, i) => <li key={i}><span className="obj-num">{i + 1}</span>{o}</li>)}
+                    </ol>
                   </div>
                 )}
-
-                {/* Methodology */}
                 {topic.methodology && (
-                  <div className="p-4 rounded-lg" style={{ background: 'var(--bg-hover)', borderLeft: '3px solid var(--sage)' }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--sage)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      🔬 Methodology
-                    </div>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.65 }}>{topic.methodology}</p>
+                  <div className="card-sec">
+                    <div className="card-sec-title">Methodology</div>
+                    <p>{topic.methodology}</p>
                   </div>
                 )}
-
-                {/* Sample info — visual cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {topic.sampleSource && <InfoCard icon="📍" label="Sample Source" value={topic.sampleSource} />}
-                  {topic.sampleType && <InfoCard icon="🧫" label="Sample Type" value={topic.sampleType} />}
-                  {topic.sampleSize && <InfoCard icon="📊" label="Sample Size" value={topic.sampleSize} />}
-                </div>
-
-                {/* Materials & Equipment — side by side with distinct styling */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {topic.materials?.length > 0 && (
-                    <div className="p-3 rounded-lg" style={{ background: 'var(--amber-dim)', border: '1px solid var(--amber-border)' }}>
-                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--amber)', marginBottom: '0.4rem' }}>🧪 Materials</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                        {topic.materials.map((item, i) => <div key={i}>• {item}</div>)}
-                      </div>
+                {(topic.sampleSource || topic.sampleType || topic.sampleSize) && (
+                  <div className="card-sec" style={{ padding: 0 }}>
+                    <div className="sample-row">
+                      {topic.sampleSource && <div className="sample-cell"><div className="sample-label">Source</div><div className="sample-value">{topic.sampleSource}</div></div>}
+                      {topic.sampleType && <div className="sample-cell"><div className="sample-label">Sample Type</div><div className="sample-value">{topic.sampleType}</div></div>}
+                      {topic.sampleSize && <div className="sample-cell"><div className="sample-label">Sample Size</div><div className="sample-value mono" style={{ fontSize: '0.78rem' }}>{topic.sampleSize}</div></div>}
                     </div>
-                  )}
-                  {topic.equipment?.length > 0 && (
-                    <div className="p-3 rounded-lg" style={{ background: 'var(--blue-dim)', border: '1px solid var(--blue-border)' }}>
-                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--blue)', marginBottom: '0.4rem' }}>⚙️ Equipment</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                        {topic.equipment.map((item, i) => <div key={i}>• {item}</div>)}
-                      </div>
+                  </div>
+                )}
+                {(topic.materials?.length > 0 || topic.equipment?.length > 0) && (
+                  <div className="card-sec">
+                    <div className="mat-eq-grid">
+                      {topic.materials?.length > 0 && (
+                        <div className="mat-box materials">
+                          <div className="mat-box-title">Materials</div>
+                          <ul>{topic.materials.map((m, i) => <li key={i}>{m}</li>)}</ul>
+                        </div>
+                      )}
+                      {topic.equipment?.length > 0 && (
+                        <div className="mat-box equipment">
+                          <div className="mat-box-title">Equipment</div>
+                          <ul>{topic.equipment.map((e, i) => <li key={i}>{e}</li>)}</ul>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-
-                {/* Cost Breakdown */}
+                  </div>
+                )}
                 {topic.estimatedCost?.breakdown?.length > 0 && (
-                  <div>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--sage)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      💰 Cost Breakdown
-                    </div>
-                    <div style={{ border: '1.5px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                      {topic.estimatedCost.breakdown.map((item, i) => (
-                        <div key={i} className="flex justify-between px-4 py-2" style={{ fontSize: '0.8rem', background: i % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-hover)', color: 'var(--text-secondary)' }}>
-                          <span>{item.item}</span>
-                          <span className="mono" style={{ fontWeight: 600, color: 'var(--text)' }}>{item.cost}</span>
-                        </div>
-                      ))}
-                      <div className="flex justify-between px-4 py-3" style={{ fontSize: '0.88rem', fontWeight: 700, background: 'var(--sage-dim)', color: 'var(--sage)', borderTop: '1.5px solid var(--border)' }}>
-                        <span>Total</span><span>{topic.estimatedCost.total}</span>
-                      </div>
-                    </div>
+                  <div className="card-sec">
+                    <div className="card-sec-title">Cost Breakdown</div>
+                    {topic.estimatedCost.breakdown.map((item, i) => (
+                      <div key={i} className="cost-row"><span className="cost-label">{item.item}</span><span className="cost-val">{item.cost}</span></div>
+                    ))}
+                    <div className="cost-total"><span>Total</span><span>{topic.estimatedCost.total}</span></div>
                   </div>
                 )}
-
-                {/* Statistical Analysis */}
                 {topic.statisticalAnalysis && (
-                  <div className="p-4 rounded-lg" style={{ background: 'var(--bg-hover)', borderLeft: '3px solid var(--purple)' }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--purple)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      📈 Statistical Analysis
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2" style={{ fontSize: '0.8rem' }}>
-                      <div><span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.68rem' }}>Design</span><br /><span style={{ color: 'var(--text)' }}>{topic.statisticalAnalysis.studyDesign}</span></div>
-                      <div><span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.68rem' }}>Software</span><br /><span style={{ color: 'var(--text)' }}>{topic.statisticalAnalysis.software}</span></div>
-                      <div style={{ gridColumn: 'span 2' }}><span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.68rem' }}>Sample Calculation</span><br /><span className="mono" style={{ color: 'var(--text)', fontSize: '0.76rem' }}>{topic.statisticalAnalysis.sampleSizeCalculation}</span></div>
-                      <div style={{ gridColumn: 'span 2' }}><span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.68rem' }}>Tests</span><br /><span style={{ color: 'var(--text)' }}>{(topic.statisticalAnalysis.tests || []).join(' · ')}</span></div>
+                  <div className="card-sec">
+                    <div className="card-sec-title">Statistical Analysis</div>
+                    <div className="stats-grid">
+                      <div><div className="stat-l">Design</div><div className="stat-v">{topic.statisticalAnalysis.studyDesign}</div></div>
+                      <div><div className="stat-l">Software</div><div className="stat-v">{topic.statisticalAnalysis.software}</div></div>
+                      {topic.statisticalAnalysis.sampleSizeCalculation && <div style={{ gridColumn: 'span 2' }}><div className="stat-l">Sample Calculation</div><div className="stat-v mono" style={{ fontSize: '0.78rem' }}>{topic.statisticalAnalysis.sampleSizeCalculation}</div></div>}
+                      {topic.statisticalAnalysis.tests?.length > 0 && <div style={{ gridColumn: 'span 2' }}><div className="stat-l">Tests</div><div className="stat-v">{topic.statisticalAnalysis.tests.join(' · ')}</div></div>}
                     </div>
                   </div>
                 )}
-
-                {/* Interview Questions */}
                 {topic.interviewRequired && topic.interviewQuestions && (
-                  <div>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      🗣️ Interview Questions
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="card-sec">
+                    <div className="card-sec-title">Interview Questions</div>
+                    <div className="interview-grid">
                       {topic.interviewQuestions.consentQuestions?.length > 0 && (
-                        <div className="p-3 rounded-lg" style={{ background: 'var(--amber-dim)', border: '1px solid var(--amber-border)' }}>
-                          <div style={{ fontSize: '0.66rem', fontWeight: 700, color: 'var(--amber)', marginBottom: '0.3rem' }}>Consent</div>
-                          {topic.interviewQuestions.consentQuestions.map((q, i) => <div key={i} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '0.2rem' }}>• {q}</div>)}
-                        </div>
+                        <div className="interview-box consent"><div className="ib-title">Consent</div><ul>{topic.interviewQuestions.consentQuestions.map((q, i) => <li key={i}>{q}</li>)}</ul></div>
                       )}
                       {topic.interviewQuestions.methodologyQuestions?.length > 0 && (
-                        <div className="p-3 rounded-lg" style={{ background: 'var(--blue-dim)', border: '1px solid var(--blue-border)' }}>
-                          <div style={{ fontSize: '0.66rem', fontWeight: 700, color: 'var(--blue)', marginBottom: '0.3rem' }}>Methodology</div>
-                          {topic.interviewQuestions.methodologyQuestions.map((q, i) => <div key={i} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '0.2rem' }}>• {q}</div>)}
+                        <div className="interview-box method"><div className="ib-title">Methodology</div><ul>{topic.interviewQuestions.methodologyQuestions.map((q, i) => <li key={i}>{q}</li>)}</ul></div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {(topic.ethicalConsiderations || topic.supervisorNotes) && (
+                  <div className="notes-pair" style={{ borderTop: '1px solid var(--bg-input)' }}>
+                    {topic.ethicalConsiderations && <div className="note-block caution"><div className="note-title">Ethical Considerations</div><p>{topic.ethicalConsiderations}</p></div>}
+                    {topic.supervisorNotes && <div className="note-block info"><div className="note-title">Supervisor Notes</div><p>{topic.supervisorNotes}</p></div>}
+                  </div>
+                )}
+                {topic.uniquenessCheck && (
+                  <div className="card-sec">
+                    <Callout color="sage" title={`Uniqueness: ${topic.uniquenessCheck.score}/10`} text={`${topic.uniquenessCheck.reason}${topic.uniquenessCheck.suggestions ? `\n\n${topic.uniquenessCheck.suggestions}` : ''}`} />
+                  </div>
+                )}
+                {/* Abstract Template */}
+                {topic.abstractTemplate && (
+                  <div className="card-sec">
+                    <div className="card-sec-title">Abstract Template</div>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginBottom: '0.75rem', fontStyle: 'italic' }}>
+                      Fill in the [___] blanks with your actual results. This teaches you the correct academic format.
+                    </p>
+                    <div style={{ background: 'var(--bg)', border: '1.5px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+                      {topic.abstractTemplate.background && (
+                        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--bg-input)' }}>
+                          <div style={{ fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--primary)', marginBottom: '0.25rem' }}>Background</div>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.65 }}>{topic.abstractTemplate.background}</p>
+                        </div>
+                      )}
+                      {topic.abstractTemplate.objective && (
+                        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--bg-input)' }}>
+                          <div style={{ fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--primary)', marginBottom: '0.25rem' }}>Objective</div>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.65 }}>{topic.abstractTemplate.objective}</p>
+                        </div>
+                      )}
+                      {topic.abstractTemplate.methods && (
+                        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--bg-input)' }}>
+                          <div style={{ fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--primary)', marginBottom: '0.25rem' }}>Methods</div>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.65 }}>{topic.abstractTemplate.methods}</p>
+                        </div>
+                      )}
+                      {topic.abstractTemplate.resultsTemplate && (
+                        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--bg-input)', background: 'var(--secondary-dim)' }}>
+                          <div style={{ fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--secondary)', marginBottom: '0.25rem' }}>Results — fill in your data</div>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.65 }}>{topic.abstractTemplate.resultsTemplate}</p>
+                        </div>
+                      )}
+                      {topic.abstractTemplate.conclusionTemplate && (
+                        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--bg-input)', background: 'var(--secondary-dim)' }}>
+                          <div style={{ fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--secondary)', marginBottom: '0.25rem' }}>Conclusion — fill in your findings</div>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.65 }}>{topic.abstractTemplate.conclusionTemplate}</p>
+                        </div>
+                      )}
+                      {topic.abstractTemplate.formatNotes && (
+                        <div style={{ padding: '0.65rem 1rem', background: 'var(--bg-hover)' }}>
+                          <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', lineHeight: 1.55, fontStyle: 'italic' }}>{topic.abstractTemplate.formatNotes}</p>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
-
-                {/* Callouts */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {topic.ethicalConsiderations && <Callout color="amber" icon="⚠️" title="Ethical Considerations" text={topic.ethicalConsiderations} />}
-                  {topic.supervisorNotes && <Callout color="blue" icon="📋" title="Supervisor Notes" text={topic.supervisorNotes} />}
-                </div>
-
-                {/* Uniqueness */}
-                {topic.uniquenessCheck && <Callout color="sage" icon="🔍" title={`Uniqueness: ${topic.uniquenessCheck.score}/10`} text={`${topic.uniquenessCheck.reason}${topic.uniquenessCheck.suggestions ? `\n\n💡 ${topic.uniquenessCheck.suggestions}` : ''}`} />}
-
+                {/* Gel Sharing */}
+                {topic.gelSharing && (
+                  <div className="card-sec">
+                    <div className="card-sec-title">Gel Sharing Plan</div>
+                    <div style={{ background: 'var(--primary-dim)', border: '1px solid var(--primary-border)', borderRadius: 8, padding: '0.85rem' }}>
+                      <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '0.5rem' }}>
+                        <div><div className="stat-l">Students per gel</div><div className="stat-v" style={{ fontWeight: 700 }}>{topic.gelSharing.studentsPerGel}</div></div>
+                      </div>
+                      {topic.gelSharing.laneLayout && (
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: 'var(--text)', padding: '0.5rem 0.65rem', background: 'var(--bg-card)', borderRadius: 4, marginBottom: '0.5rem', overflowX: 'auto', whiteSpace: 'nowrap' }}>{topic.gelSharing.laneLayout}</div>
+                      )}
+                      {topic.gelSharing.fairnessTip && (
+                        <p style={{ fontSize: '0.76rem', color: 'var(--primary)', lineHeight: 1.55 }}>{topic.gelSharing.fairnessTip}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {/* Actions */}
-                <div className="flex flex-wrap gap-2 pt-3" style={{ borderTop: '1.5px solid var(--border)' }}>
+                <div className="card-actions">
                   {!isApproved && (
                     <>
                       <button onClick={(e) => { e.stopPropagation(); approveTopic(index); }} className="act-btn primary"><Star size={12} /> Approve</button>
@@ -589,587 +557,432 @@ export default function App() {
     );
   };
 
-  // ═══════════════════════════════════════
-  // TABS
-  // ═══════════════════════════════════════
-
-  const TABS = [
-    { id: 'generate', label: 'Generate', icon: <Sparkles size={13} /> },
-    { id: 'approved', label: 'Approved', icon: <Star size={13} />, count: approvedTopics.length },
-    { id: 'students', label: 'Students', icon: <Users size={13} />, count: students.length },
-    { id: 'budget', label: 'Budget', icon: <Zap size={13} /> },
-    { id: 'suppliers', label: 'Suppliers', icon: <ExternalLink size={13} /> },
-    { id: 'grants', label: 'Grants', icon: <FlaskConical size={13} /> },
-    { id: 'labplan', label: 'Lab Plan', icon: <Beaker size={13} /> },
-  ];
-
-  return (
-    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
-      {/* ═══ HEADER ═══ */}
-      <header className="sticky top-0 z-30" style={{ background: 'rgba(247, 243, 237, 0.9)', backdropFilter: 'blur(12px)', borderBottom: '1.5px solid var(--border)' }}>
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent-border)' }}>
-              <Microscope size={18} style={{ color: 'var(--accent)' }} />
-            </div>
-            <div>
-              <h1 style={{ fontFamily: "'Literata', serif", fontSize: '1.15rem', fontWeight: 700, color: 'var(--text)' }}>Research Topic Generator</h1>
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Medical Microbiology · Lagos, Nigeria</p>
-            </div>
-            <button onClick={() => { setShowWalkthrough(true); setWalkthroughStep(0); }} className="ml-auto p-2 rounded-lg" style={{ color: showWalkthrough ? 'var(--accent)' : 'var(--text-muted)', background: showWalkthrough ? 'var(--accent-dim)' : 'transparent' }}>
-              <HelpCircle size={16} />
-            </button>
-          </div>
-          <div id="tabs" className="flex gap-0.5 overflow-x-auto pb-1" style={{ borderBottom: '1px solid var(--border)' }}>
-            <WalkthroughTip step={4} />
-            {TABS.map(t => (
-              <button key={t.id} onClick={() => setActiveTab(t.id)} className={`nav-btn ${activeTab === t.id ? 'active' : ''}`}>
-                <span className="flex items-center gap-1.5">
-                  {t.icon} {t.label}
-                  {t.count > 0 && <span style={{ fontSize: '0.58rem', fontWeight: 700, background: 'var(--accent)', color: '#fff', padding: '0.1rem 0.35rem', borderRadius: 99 }}>{t.count}</span>}
-                </span>
-              </button>
-            ))}
-          </div>
+  // Shimmer placeholder card
+  const GhostCard = () => (
+    <div className="topic-card ghost">
+      <div style={{ padding: '1.15rem 1.35rem', display: 'flex', gap: '0.85rem' }}>
+        <div className="card-stripe" style={{ background: 'var(--border)' }} />
+        <div style={{ flex: 1 }}>
+          <div className="shimmer" style={{ width: '85%', height: 14, marginBottom: '0.5rem' }} />
+          <div className="shimmer" style={{ width: '60%', height: 11, marginBottom: '0.4rem' }} />
+          <div className="shimmer" style={{ width: '40%', height: 10 }} />
         </div>
-      </header>
+      </div>
+    </div>
+  );
 
-      <main className="max-w-4xl mx-auto px-4 py-5">
-        {/* Error */}
-        {error && (
-          <div className="mb-4 p-3 rounded-lg flex items-start gap-2" style={{ background: 'var(--red-dim)', border: '1px solid var(--red-border)' }}>
-            <AlertCircle size={16} style={{ color: 'var(--red)' }} className="flex-shrink-0 mt-0.5" />
-            <p style={{ fontSize: '0.8rem', color: 'var(--red)', flex: 1 }}>{error}</p>
-            <button onClick={() => setError(null)}><X size={14} style={{ color: 'var(--red)' }} /></button>
-          </div>
-        )}
+  // ─── Student form ───
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
 
-        {/* ═══ GENERATE TAB ═══ */}
+  // ─── Render ───
+  return (
+    <div className="app-layout">
+      {/* ═══ Sidebar ═══ */}
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <h2>Research Topic Generator</h2>
+          <p>Medical Microbiology</p>
+        </div>
+        <div className="nav-group">
+          <div className="nav-group-label">Create</div>
+          {TABS.filter(t => t.group === 'create').map(tab => (
+            <button key={tab.id} className={`nav-item ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
+              <tab.icon size={16} className="nav-icon" />
+              {tab.label}
+              {tab.id === 'approved' && approvedTopics.length > 0 && <span className="nav-count">{approvedTopics.length}</span>}
+              {tab.id === 'students' && students.length > 0 && <span className="nav-count">{students.length}</span>}
+            </button>
+          ))}
+        </div>
+        <div className="nav-group">
+          <div className="nav-group-label">Plan</div>
+          {TABS.filter(t => t.group === 'plan').map(tab => (
+            <button key={tab.id} className={`nav-item ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
+              <tab.icon size={16} className="nav-icon" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="sidebar-footer"><p>Lagos, Nigeria · 2025</p></div>
+      </aside>
+
+      {/* ═══ Main ═══ */}
+      <main className="main-content">
+        {/* ── Generate tab ── */}
         {activeTab === 'generate' && (
-          <section className="space-y-1">
-            {/* Guide */}
-            <CollapsibleSection id="guide" title="👋 How This Works">
-              <div className="p-5 rounded-xl mb-4" style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border)' }}>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {[
-                    { n: 1, c: '--accent', t: 'Configure', d: 'Pick focus areas and check the equipment available in your lab.' },
-                    { n: 2, c: '--sage', t: 'Generate & Review', d: 'AI creates topics with full methodology, costs, and statistics.' },
-                    { n: 3, c: '--blue', t: 'Assign to Students', d: 'Approve favorites, assign topics, and email students directly.' },
-                  ].map(s => (
-                    <div key={s.n} className="flex gap-3" style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center" style={{ fontSize: '0.62rem', fontWeight: 800, background: `var(${s.c}-dim)`, color: `var(${s.c})` }}>{s.n}</div>
-                      <div><strong style={{ color: 'var(--text)' }}>{s.t}</strong><br />{s.d}</div>
+          <>
+            <h1 className="page-title">Generate Topics</h1>
+            <p className="page-subtitle">Configure your lab setup and generate experimental research topics with full methodology and Naira budgets.</p>
+
+            {error && <div className="error-bar"><AlertTriangle size={16} /><p>{error}</p><button onClick={() => setError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red)' }}><X size={14} /></button></div>}
+
+            {/* Loading state — replaces config */}
+            {loading ? (
+              <div>
+                <div className="loading-full">
+                  <div className="loading-dots">
+                    <div className="loading-dot" style={{ background: 'var(--primary)', animationDelay: '0s' }} />
+                    <div className="loading-dot" style={{ background: 'var(--secondary)', animationDelay: '0.15s' }} />
+                    <div className="loading-dot" style={{ background: 'var(--primary)', animationDelay: '0.3s' }} />
+                  </div>
+                  <div className="loading-msg">{LOADING_MESSAGES[loadingMsgIdx]}</div>
+                  <div className="loading-sub">Each topic includes methodology, costs, and materials. Usually 30–90 seconds.</div>
+                  {topics.length > 0 && <div style={{ marginTop: '1rem', fontFamily: 'var(--mono)', fontSize: '0.76rem', fontWeight: 600, color: 'var(--primary)' }}>{topics.length} of {numTopics} topics ready</div>}
+                </div>
+
+                {/* Progressive: show topics as they arrive */}
+                {topics.length > 0 && (
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                      <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-3)' }}>Generated Topics ({topics.length} of {numTopics})</span>
                     </div>
-                  ))}
-                </div>
+                    {topics.map((t, i) => <TopicCard key={i} topic={t} index={i} />)}
+                    {Array.from({ length: numTopics - topics.length }).map((_, i) => <GhostCard key={`g-${i}`} />)}
+                  </div>
+                )}
               </div>
-            </CollapsibleSection>
-
-            {/* Focus Areas */}
-            <div className="tooltip-anchor" id="focus-areas">
-              <WalkthroughTip step={0} />
-              <CollapsibleSection id="focus" title="Focus Areas">
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {FOCUS_AREAS.map(a => (
-                    <button key={a.id} onClick={() => setSelectedAreas(p => p.includes(a.id) ? p.filter(x => x !== a.id) : [...p, a.id])} className={`chip ${selectedAreas.includes(a.id) ? 'on' : ''}`}>
-                      {a.icon} {a.label}
-                    </button>
-                  ))}
-                </div>
-                <input type="text" value={customFocusArea} onChange={e => setCustomFocusArea(e.target.value)} placeholder="+ Custom focus area..." style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, fontSize: '0.78rem', border: '1.5px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text)' }} />
-              </CollapsibleSection>
-            </div>
-
-            {/* Bacteria */}
-            <CollapsibleSection id="bacteria" title="Bacteria Filter" badge={selectedBacteria.length > 0 ? `${selectedBacteria.length} selected` : null}>
-              <div className="p-4 rounded-xl mb-2" style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border)' }}>
-                <div className="mb-3">
-                  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Aerobes</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {BACTERIA.filter(b => !b.anaerobe).map(b => (
-                      <button key={b.id} onClick={() => setSelectedBacteria(p => p.includes(b.id) ? p.filter(x => x !== b.id) : [...p, b.id])} className={`chip ${selectedBacteria.includes(b.id) ? 'on' : ''}`} style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', fontFamily: "'JetBrains Mono', monospace" }}>
-                        {b.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Anaerobes</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {BACTERIA.filter(b => b.anaerobe).map(b => (
-                      <button key={b.id} onClick={() => setSelectedBacteria(p => p.includes(b.id) ? p.filter(x => x !== b.id) : [...p, b.id])} className={`chip ${selectedBacteria.includes(b.id) ? 'on' : ''}`} style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', fontFamily: "'JetBrains Mono', monospace" }}>
-                        {b.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <input type="text" value={customBacteria} onChange={e => setCustomBacteria(e.target.value)} placeholder="+ Custom organism..." style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, fontSize: '0.76rem', border: '1.5px solid var(--border)', background: 'var(--bg-hover)', color: 'var(--text)' }} />
-              </div>
-            </CollapsibleSection>
-
-            {/* Equipment */}
-            <div className="tooltip-anchor" id="equipment">
-              <WalkthroughTip step={1} />
-              <CollapsibleSection id="equipment" title="Lab Equipment">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex gap-1.5">
-                    {['basic', 'intermediate', 'advanced'].map(t => (
-                      <button key={t} onClick={() => applyPreset(t)} className={`preset-btn ${activePreset === t ? 'on' : ''}`}>
-                        {t === 'basic' ? 'Basic Lab' : t === 'intermediate' ? 'Well-Equipped' : 'Advanced'}
-                      </button>
-                    ))}
-                  </div>
-                  <button onClick={() => setEquipment([])} style={{ fontSize: '0.68rem', color: 'var(--accent)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>Clear All</button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-                  {EQUIPMENT_LIST.map(e => (
-                    <div key={e.id} className={`eq-item ${equipment.includes(e.id) ? 'on' : ''}`} onClick={() => toggleEquip(e.id)}>
-                      <div className="eq-check">
-                        {equipment.includes(e.id) && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M5 12l5 5L20 7" /></svg>}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text)' }}>{e.name}</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{e.hint}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CollapsibleSection>
-            </div>
-
-            {/* Settings row */}
-            <div className="tooltip-anchor" id="timeline">
-              <WalkthroughTip step={2} />
-              <CollapsibleSection id="settings" title="Settings">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                  <div>
-                    <div className="section-label mb-1">Timeline</div>
-                    <select value={timeline} onChange={e => setTimeline(e.target.value)}>
-                      {TIMELINES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <div className="section-label mb-1">Demographic</div>
-                    <select value={selectedDemographic} onChange={e => setSelectedDemographic(e.target.value)}>
-                      {DEMOGRAPHICS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <div className="section-label mb-1">Budget Cap</div>
-                    <select value={maxBudget} onChange={e => setMaxBudget(e.target.value)}>
-                      {BUDGET_CAPS.map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <div className="section-label mb-1">Topics</div>
-                    <select value={numTopics} onChange={e => setNumTopics(parseInt(e.target.value))}>
-                      {[3, 5, 8, 10, 15, 20].map(n => <option key={n} value={n}>{n} topics</option>)}
-                    </select>
-                  </div>
-                </div>
-                <textarea value={customNotes} onChange={e => setCustomNotes(e.target.value)} placeholder="Any specific instructions for the AI (e.g., 'focus on food handlers in Surulere markets', 'include biofilm studies')..." rows={2} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, fontSize: '0.78rem', border: '1.5px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text)', resize: 'none' }} />
-              </CollapsibleSection>
-            </div>
-
-            {/* Generate button */}
-            <div className="tooltip-anchor" id="generate-btn">
-              <WalkthroughTip step={3} />
-              <button onClick={generateTopics} disabled={loading || selectedAreas.length === 0} className="gen-btn mt-2 flex items-center justify-center gap-2">
-                {loading ? <><RefreshCw size={16} className="spinning" /> Generating...</> : <><Sparkles size={16} /> Generate {numTopics} Topics</>}
-              </button>
-            </div>
-
-            {/* Loading */}
-            {loading && (
-              <div className="p-8 rounded-xl text-center space-y-5 mt-4" style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border)' }}>
-                <div className="flex justify-center gap-3">
-                  {['var(--accent)', 'var(--sage)', 'var(--blue)', 'var(--amber)', 'var(--purple)'].map((c, i) => (
-                    <div key={i} className="loading-dot" style={{ background: c, animationDelay: `${i * 0.15}s` }} />
-                  ))}
-                </div>
-                <div>
-                  <p style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text)' }}>{loadingMsg}</p>
-                  <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                    Each topic includes methodology, costs, materials, stats, and more.<br />
-                    Usually takes 30–90 seconds. Good time for a coffee! ☕
-                  </p>
-                </div>
-                <div className="space-y-2 max-w-md mx-auto">
-                  {[1, 2, 3].map(i => <div key={i} className="shimmer-bar" style={{ width: `${100 - i * 15}%`, margin: '0 auto' }} />)}
-                </div>
-              </div>
-            )}
-
-            {/* Results */}
-            {!loading && topics.length > 0 && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="section-label">Generated Topics ({topics.length})</span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Click to expand details</span>
-                </div>
-                <div className="space-y-2">
-                  {topics.map((t, i) => <TopicCard key={i} topic={t} index={i} />)}
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* ═══ APPROVED TAB ═══ */}
-        {activeTab === 'approved' && (
-          <section>
-            {approvedTopics.length === 0 ? (
-              <EmptyState icon={<Star size={36} />} title="No approved topics yet" desc="Generate topics and click Approve to save them here." />
             ) : (
               <>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="section-label">Approved ({approvedTopics.length})</span>
-                  <button onClick={exportApproved} className="act-btn primary"><Download size={12} /> Export All</button>
+                {/* Config sections */}
+                <div className="config-section">
+                  <CollapseHeader label="Focus Areas" sectionKey="focus" />
+                  {sections.focus && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <div className="chips">
+                        {FOCUS_AREAS.map(a => <div key={a.id} className={`chip ${selectedAreas.includes(a.id) ? 'on' : ''}`} onClick={() => toggleArea(a.id)}>{a.label}</div>)}
+                      </div>
+                      <input type="text" placeholder="Custom focus area (optional)" value={customFocusArea} onChange={e => setCustomFocusArea(e.target.value)} style={{ marginTop: '0.5rem' }} />
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  {approvedTopics.map((t, i) => <TopicCard key={i} topic={t} index={i} isApproved />)}
+
+                <div className="config-section">
+                  <CollapseHeader label="Bacteria Filter" sectionKey="bacteria" />
+                  {sections.bacteria && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <div style={{ fontSize: '0.58rem', fontWeight: 700, color: 'var(--text-3)', marginBottom: '0.3rem' }}>AEROBES</div>
+                        <div className="chips">{BACTERIA.aerobes.map(b => <div key={b.id} className={`chip ${selectedBacteria.includes(b.id) ? 'on' : ''}`} onClick={() => toggleBacteria(b.id)} style={{ fontStyle: 'italic', fontSize: '0.74rem' }}>{b.name}</div>)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.58rem', fontWeight: 700, color: 'var(--text-3)', marginBottom: '0.3rem' }}>ANAEROBES</div>
+                        <div className="chips">{BACTERIA.anaerobes.map(b => <div key={b.id} className={`chip ${selectedBacteria.includes(b.id) ? 'on' : ''}`} onClick={() => toggleBacteria(b.id)} style={{ fontStyle: 'italic', fontSize: '0.74rem' }}>{b.name}</div>)}</div>
+                      </div>
+                      <input type="text" placeholder="Custom bacteria (optional)" value={customBacteria} onChange={e => setCustomBacteria(e.target.value)} style={{ marginTop: '0.5rem' }} />
+                    </div>
+                  )}
                 </div>
+
+                <div className="config-section">
+                  <CollapseHeader label="Lab Equipment" sectionKey="equipment" />
+                  {sections.equipment && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <div className="presets">
+                        {Object.keys(PRESETS).map(p => <button key={p} className={`preset-btn ${activePreset === p ? 'on' : ''}`} onClick={() => setEquipment(PRESETS[p])}>{p === 'basic' ? 'Basic Lab' : p === 'equipped' ? 'Well-Equipped' : 'Advanced'}</button>)}
+                        <button className="preset-btn" onClick={() => setEquipment([])}>Clear All</button>
+                      </div>
+                      <div className="equip-grid">
+                        {EQUIPMENT_LIST.map(eq => (
+                          <div key={eq.id} className={`eq-item ${equipment.includes(eq.id) ? 'on' : ''}`} onClick={() => toggleEquip(eq.id)}>
+                            <div className="eq-check">{equipment.includes(eq.id) && <Check size={10} color="#fff" strokeWidth={3} />}</div>
+                            <span className="eq-name">{eq.name}</span>
+                            <span className="eq-hint">{eq.hint}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="config-section">
+                  <CollapseHeader label="Settings" sectionKey="settings" />
+                  {sections.settings && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <div className="settings-grid">
+                        <div><label>Timeline</label><select value={timeline} onChange={e => setTimeline(e.target.value)}>{TIMELINES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
+                        <div><label>Demographic</label><select value={selectedDemographic} onChange={e => setSelectedDemographic(e.target.value)}>{DEMOGRAPHICS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}</select></div>
+                        <div><label>Budget Cap</label><select value={maxBudget} onChange={e => setMaxBudget(e.target.value)}>{BUDGET_CAPS.map(b => <option key={b.value} value={b.value}>{b.label}</option>)}</select></div>
+                        <div><label>Topics</label><select value={numTopics} onChange={e => setNumTopics(parseInt(e.target.value))}>{[3,5,8,10].map(n => <option key={n} value={n}>{n} topics</option>)}</select></div>
+                      </div>
+                      <textarea rows={3} placeholder="Professor's notes (optional) — specific requirements, constraints, or preferences..." value={customNotes} onChange={e => setCustomNotes(e.target.value)} style={{ marginTop: '0.65rem' }} />
+                    </div>
+                  )}
+                </div>
+
+                <button onClick={generateTopics} disabled={selectedAreas.length === 0 || equipment.length === 0} className="gen-btn">
+                  <Sparkles size={16} /> Generate {numTopics} Topics
+                </button>
+
+                {/* Results (after loading completes) */}
+                {topics.length > 0 && (
+                  <div style={{ marginTop: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                      <span style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-3)' }}>Generated Topics ({topics.length})</span>
+                    </div>
+                    {topics.map((t, i) => <TopicCard key={i} topic={t} index={i} />)}
+                  </div>
+                )}
               </>
             )}
-          </section>
+          </>
         )}
 
-        {/* ═══ STUDENTS TAB ═══ */}
+        {/* ── Approved tab ── */}
+        {activeTab === 'approved' && (
+          <>
+            <h1 className="page-title">Approved Topics</h1>
+            <p className="page-subtitle">Topics ready for assignment to students.</p>
+            {approvedTopics.length === 0 ? (
+              <div className="empty-state"><Star size={40} style={{ color: 'var(--text-3)', opacity: 0.3 }} /><div className="es-title">No approved topics yet</div><div className="es-desc">Generate and approve topics from the Generate tab.</div></div>
+            ) : (
+              <>
+                <div style={{ marginBottom: '1rem' }}><button onClick={exportApproved} className="act-btn"><Copy size={12} /> Export All</button></div>
+                {approvedTopics.map((t, i) => <TopicCard key={i} topic={t} index={i} isApproved />)}
+              </>
+            )}
+          </>
+        )}
+
+        {/* ── Students tab ── */}
         {activeTab === 'students' && (
-          <section className="space-y-5">
-            {/* Upload */}
-            <div className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border)' }}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="section-label">Student List</span>
-                <label className="act-btn primary cursor-pointer">
-                  <Upload size={12} /> Upload CSV
-                  <input type="file" accept=".csv,.txt" onChange={handleCSVUpload} className="hidden" />
-                </label>
-              </div>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-                Upload a CSV with columns: Name, Email. Or add students manually below.
-              </p>
-              {/* Manual add */}
-              <div className="flex gap-2">
-                <input type="text" id="student-name" placeholder="Student name" style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: 8, fontSize: '0.78rem', border: '1.5px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} />
-                <input type="text" id="student-email" placeholder="Email" style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: 8, fontSize: '0.78rem', border: '1.5px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} />
-                <button onClick={() => {
-                  const name = document.getElementById('student-name').value.trim();
-                  const email = document.getElementById('student-email').value.trim();
-                  if (name) {
-                    setStudents(p => [...p, { name, email }]);
-                    document.getElementById('student-name').value = '';
-                    document.getElementById('student-email').value = '';
-                    showToast('Student added');
-                  }
-                }} className="act-btn primary">Add</button>
+          <>
+            <h1 className="page-title">Students</h1>
+            <p className="page-subtitle">Upload a CSV or add students manually, then assign approved topics.</p>
+            <div className="config-section">
+              <div className="section-label">Upload CSV</div>
+              <p style={{ fontSize: '0.74rem', color: 'var(--text-3)', marginBottom: '0.5rem' }}>Format: Name,Email — one per line.</p>
+              <label className="act-btn" style={{ cursor: 'pointer' }}><Upload size={12} /> Choose File <input type="file" accept=".csv,.txt" onChange={handleCSVUpload} style={{ display: 'none' }} /></label>
+            </div>
+            <div className="config-section">
+              <div className="section-label">Add Manually</div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input type="text" placeholder="Name" value={newName} onChange={e => setNewName(e.target.value)} style={{ flex: 1 }} />
+                <input type="text" placeholder="Email" value={newEmail} onChange={e => setNewEmail(e.target.value)} style={{ flex: 1 }} />
+                <button onClick={() => { addStudentManual(newName, newEmail); setNewName(''); setNewEmail(''); }} className="act-btn primary" disabled={!newName || !newEmail}><Users size={12} /> Add</button>
               </div>
             </div>
-
-            {/* Student list with assignments */}
             {students.length === 0 ? (
-              <EmptyState icon={<Users size={36} />} title="No students yet" desc="Upload a CSV or add students manually above." />
+              <div className="empty-state"><Users size={40} style={{ color: 'var(--text-3)', opacity: 0.3 }} /><div className="es-title">No students yet</div><div className="es-desc">Upload a CSV or add students manually.</div></div>
             ) : (
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {students.map((s, i) => {
                   const assignedIdx = assignments[i];
                   const assignedTopic = assignedIdx !== undefined ? approvedTopics[assignedIdx] : null;
                   return (
-                    <div key={i} className="student-row fade-in" style={{ animationDelay: `${i * 0.04}s` }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>
-                        {s.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
+                    <div key={i} className="student-row">
+                      <div className="student-avatar">{s.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{s.name}</div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{s.email || 'No email'}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>{s.email}</div>
+                        {assignedTopic && <div style={{ fontSize: '0.68rem', color: 'var(--primary)', marginTop: '0.15rem', fontStyle: 'italic' }}>{assignedTopic.title.slice(0, 60)}...</div>}
                       </div>
-                      {assignedTopic ? (
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <div className="text-right" style={{ maxWidth: 200 }}>
-                            <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--sage)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{assignedTopic.title}</div>
-                            <div className="mono" style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{assignedTopic.estimatedCost?.total}</div>
-                          </div>
-                          {s.email && (
-                            <button onClick={() => openEmail(s, assignedTopic)} className="act-btn"><Mail size={11} /> Email</button>
-                          )}
-                          <button onClick={() => setAssignments(p => { const n = { ...p }; delete n[i]; return n; })} className="act-btn danger"><X size={11} /></button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {approvedTopics.length > 0 ? (
-                            <select onChange={e => { if (e.target.value !== '') assignTopic(i, parseInt(e.target.value)); }} value="" style={{ padding: '0.35rem 0.6rem', borderRadius: 6, fontSize: '0.7rem', border: '1.5px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', maxWidth: 250 }}>
-                              <option value="">Assign topic...</option>
-                              {approvedTopics.map((t, j) => (
-                                <option key={j} value={j}>{t.title.slice(0, 60)}...</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>No approved topics</span>
-                          )}
-                          <button onClick={() => { setStudents(p => p.filter((_, j) => j !== i)); setAssignments(p => { const n = { ...p }; delete n[i]; return n; }); }} className="act-btn danger"><Trash2 size={11} /></button>
-                        </div>
-                      )}
+                      <select value={assignedIdx !== undefined ? assignedIdx : ''} onChange={e => assignTopic(i, parseInt(e.target.value))} style={{ width: 140, fontSize: '0.7rem' }}>
+                        <option value="">Assign topic...</option>
+                        {approvedTopics.map((t, ti) => <option key={ti} value={ti}>{t.title.slice(0, 40)}...</option>)}
+                      </select>
+                      {assignedTopic && <button onClick={() => emailStudent(s, assignedTopic)} className="act-btn" title="Email"><Mail size={12} /></button>}
+                      <button onClick={() => removeStudent(i)} className="act-btn danger"><Trash2 size={12} /></button>
                     </div>
                   );
                 })}
               </div>
             )}
-
-            {/* Bulk email */}
-            {students.length > 0 && Object.keys(assignments).length > 0 && (
-              <div className="p-4 rounded-xl" style={{ background: 'var(--sage-dim)', border: '1px solid var(--sage-border)' }}>
-                <div style={{ fontSize: '0.76rem', fontWeight: 600, color: 'var(--sage)', marginBottom: '0.35rem' }}>
-                  📧 {Object.keys(assignments).length} of {students.length} students assigned
-                </div>
-                <p style={{ fontSize: '0.7rem', color: 'rgba(90, 122, 82, 0.7)' }}>
-                  Click "Email" next to each student to open a pre-filled email with their topic details.
-                </p>
-              </div>
-            )}
-          </section>
+          </>
         )}
 
-        {/* ═══ BUDGET TAB ═══ */}
+        {/* ── Budget tab ── */}
         {activeTab === 'budget' && (
-          <section>
-            {(() => {
-              const withCost = approvedTopics.filter(t => t.estimatedCost);
-              if (withCost.length === 0) return <EmptyState icon={<Zap size={36} />} title="No cost data yet" desc="Approve topics to see budget analysis." />;
-              const total = withCost.reduce((a, t) => { const [lo, hi] = parseCostRange(t.estimatedCost?.total); return [a[0] + lo, a[1] + hi]; }, [0, 0]);
-              const pheno = withCost.filter(t => !t.estimatedCost?.hasMolecular).length;
-              const mol = withCost.filter(t => t.estimatedCost?.hasMolecular).length;
-              return (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <StatCard label="Total Range" value={`₦${total[0].toLocaleString()} – ₦${total[1].toLocaleString()}`} color="accent" />
-                    <StatCard label="Avg / Project" value={`₦${Math.round(total[0] / withCost.length).toLocaleString()}`} color="blue" />
-                    <StatCard label="Phenotypic" value={pheno.toString()} color="sage" />
-                    <StatCard label="Molecular 🧬" value={mol.toString()} color="purple" />
-                  </div>
-                  {/* Project list */}
-                  <div className="space-y-1.5">
-                    {withCost.map((t, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border)' }}>
-                        <div className="flex-1 min-w-0 mr-3">
-                          <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{t.bacteria || 'Various'} · {t.difficulty}</div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {t.estimatedCost?.hasMolecular && <span className="badge badge-molecular">🧬</span>}
-                          <span className={`badge badge-${t.estimatedCost?.costLevel || 'low'}`}>{t.estimatedCost?.total}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {withCost.length > 1 && (
-                    <Callout color="sage" icon="💰" title="Bulk Savings Estimate" text={`${mol > 1 ? `• PCR reagents: ${mol} projects can share master mix (save ~₦100K–200K)\n` : ''}${pheno > 1 ? `• Culture media: ${pheno} projects share agar bottles (save ~₦50K–100K)\n` : ''}• Consumables: Buy cartons of 500 petri dishes vs packs of 20\n• Antibiotic discs: Bulk = 10-15% discount\n\nEst. savings: ₦${(withCost.length * 30000).toLocaleString()} – ₦${(withCost.length * 80000).toLocaleString()}`} />
-                  )}
+          <>
+            <h1 className="page-title">Budget Analysis</h1>
+            <p className="page-subtitle">Cost overview for approved topics.</p>
+            {approvedTopics.length === 0 ? (
+              <div className="empty-state"><DollarSign size={40} style={{ color: 'var(--text-3)', opacity: 0.3 }} /><div className="es-title">No approved topics</div><div className="es-desc">Approve topics first to see budget analysis.</div></div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                  <div className="stat-card"><div style={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)' }}>Projects</div><div style={{ fontFamily: 'var(--serif)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>{approvedTopics.length}</div></div>
+                  <div className="stat-card"><div style={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)' }}>Molecular</div><div style={{ fontFamily: 'var(--serif)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--purple)' }}>{approvedTopics.filter(t => t.estimatedCost?.hasMolecular).length}</div></div>
+                  <div className="stat-card"><div style={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)' }}>Phenotypic</div><div style={{ fontFamily: 'var(--serif)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--secondary)' }}>{approvedTopics.filter(t => !t.estimatedCost?.hasMolecular).length}</div></div>
                 </div>
-              );
-            })()}
-          </section>
+                {approvedTopics.map((t, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0', borderBottom: '1px solid var(--bg-input)' }}>
+                    <div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>{t.title.slice(0, 65)}...</div>
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>{t.bacteria || 'N/A'} · {t.difficulty || 'N/A'}</div>
+                    </div>
+                    <span className="mono" style={{ fontSize: '0.76rem', fontWeight: 600, color: 'var(--primary)' }}>{t.estimatedCost?.total || 'N/A'}</span>
+                  </div>
+                ))}
+                <Callout color="sage" title="Bulk Savings Tip" text="Sharing PCR reagents, culture media, and consumables across projects can save 15–25% on total costs. Coordinate equipment scheduling to maximize throughput." />
+              </>
+            )}
+          </>
         )}
 
-        {/* ═══ SUPPLIERS TAB ═══ */}
+        {/* ── Suppliers tab ── */}
         {activeTab === 'suppliers' && (
-          <section className="space-y-4">
-            <Callout color="sage" icon="💡" title="Pro Tip" text="Call ahead to confirm stock and prices. Bulk orders get 10-20% off. Always ask for institutional pricing." />
-            <div className="section-label mb-2">Laboratory Suppliers — Lagos</div>
-            <div className="space-y-3">
+          <>
+            <h1 className="page-title">Lagos Suppliers</h1>
+            <p className="page-subtitle">Local lab suppliers and molecular services contacts.</p>
+            <Callout color="amber" title="Pro Tip" text="Call ahead to confirm stock. Ask about institutional pricing and bulk discounts for 5+ items." />
+            <div style={{ display: 'grid', gap: '0.65rem', marginTop: '1.25rem' }}>
               {SUPPLIERS.map((s, i) => (
-                <div key={i} className="supplier-card fade-in" style={{ animationDelay: `${i * 0.06}s` }}>
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>{s.name}</span>
-                        {s.tag && <span className="badge badge-medium">{s.tag}</span>}
-                      </div>
-                      <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>{s.specialty}</p>
-                    </div>
-                    {s.website && <a href={s.website} target="_blank" rel="noopener noreferrer" className="act-btn flex-shrink-0"><ExternalLink size={11} /> Visit</a>}
+                <div key={i} className="supplier-card">
+                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.35rem' }}>{s.name}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.55, marginBottom: '0.5rem' }}>{s.notes}</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: '0.72rem', color: 'var(--text-3)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><MapPin size={11} /> {s.address}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Phone size={11} /> {s.phone}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Mail size={11} /> {s.email}</span>
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }} className="space-y-0.5">
-                    <p>📍 {s.address}</p>
-                    {s.phone && <p>📞 {s.phone}</p>}
-                    {s.email && <p>✉️ {s.email}</p>}
+                  <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.5rem' }}>
+                    {s.tags.map(tag => <span key={tag} className="badge" style={{ background: 'var(--bg-input)', color: 'var(--text-3)' }}>{tag}</span>)}
                   </div>
-                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.5rem' }}>{s.notes}</p>
                 </div>
               ))}
             </div>
-            <div className="section-label mt-4 mb-2">Molecular Services</div>
-            <div className="supplier-card">
-              <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>{NIMR.name}</span>
-              <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '0.15rem', marginBottom: '0.5rem' }}>{NIMR.desc}</p>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }} className="space-y-0.5">
-                <p>📍 {NIMR.address}</p>
-                <p>📞 {NIMR.phone}</p>
-                <p>✉️ {NIMR.email}</p>
+            <div style={{ marginTop: '1.5rem' }}>
+              <div className="section-label">NIMR Molecular Services</div>
+              <div className="supplier-card">
+                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.35rem' }}>Nigerian Institute of Medical Research (NIMR)</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.55 }}>DNA sequencing: ₦15,000–₦25,000 per sample. HPLC analysis: ₦20,000–₦35,000 per run. Contact molecular biology unit for scheduling.</div>
               </div>
-              <p className="mono" style={{ fontSize: '0.72rem', color: 'var(--amber)', marginTop: '0.5rem', fontWeight: 500 }}>{NIMR.pricing}</p>
             </div>
-          </section>
+          </>
         )}
 
-        {/* ═══ GRANTS TAB ═══ */}
+        {/* ── Grants tab ── */}
         {activeTab === 'grants' && (
-          <section className="space-y-5">
-            {['Nigerian', 'International', 'AMR'].map(type => {
-              const items = GRANTS.filter(g => g.type === type);
-              if (!items.length) return null;
-              return (
-                <div key={type}>
-                  <div className="section-label mb-2">{type === 'AMR' ? '🦠 AMR-Specific' : type === 'Nigerian' ? '🇳🇬 Nigerian' : '🌍 International'} Funding</div>
-                  <div className="space-y-2">
-                    {items.map((g, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 rounded-xl fade-in" style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border)', animationDelay: `${i * 0.06}s` }}>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span>{g.emoji}</span>
-                            <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text)' }}>{g.name}</span>
-                          </div>
-                          <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>{g.desc}</p>
-                        </div>
-                        <a href={g.url} target="_blank" rel="noopener noreferrer" className="act-btn flex-shrink-0"><ExternalLink size={11} /> Apply</a>
-                      </div>
-                    ))}
+          <>
+            <h1 className="page-title">Funding Sources</h1>
+            <p className="page-subtitle">Nigerian and international grants for microbiology research.</p>
+            <div style={{ display: 'grid', gap: '0.65rem' }}>
+              {GRANTS.map((g, i) => (
+                <div key={i} className="supplier-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text)' }}>{g.name}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: '0.1rem' }}>{g.org}</div>
+                    </div>
+                    <span className="mono" style={{ fontSize: '0.76rem', fontWeight: 600, color: 'var(--primary)' }}>{g.amount}</span>
                   </div>
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', fontSize: '0.72rem', color: 'var(--text-2)' }}>
+                    <span>Cycle: {g.cycle}</span>
+                    <span>Focus: {g.focus}</span>
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--primary)', marginTop: '0.35rem', fontStyle: 'italic' }}>{g.tip}</div>
                 </div>
-              );
-            })}
-            <Callout color="amber" icon="📝" title="Application Tips" text="TETFund calls are institutional — check with your university admin. Wellcome & Fogarty need a lead PI with host institution. GARDP specifically funds AMR. Always look for co-funding." />
-          </section>
+              ))}
+            </div>
+          </>
         )}
 
-        {/* ═══ LAB PLAN TAB ═══ */}
+        {/* ── Lab Plan tab ── */}
         {activeTab === 'labplan' && (
-          <section>
+          <>
+            <h1 className="page-title">Lab Planning</h1>
+            <p className="page-subtitle">Molecular project coordination, gel layout optimization, and fair resource allocation.</p>
             {(() => {
-              const mol = approvedTopics.filter(t => t.estimatedCost?.hasMolecular);
-              if (!mol.length) return <EmptyState icon={<Beaker size={36} />} title="No molecular projects yet" desc="Approve topics with PCR/molecular work to see gel layout planning." />;
-              return (
-                <div className="space-y-4">
-                  <div className="section-label mb-2">Molecular Projects ({mol.length})</div>
-                  <div className="space-y-2">
-                    {mol.map((t, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border)' }}>
-                        <span className="badge badge-molecular">🧬</span>
-                        <div className="flex-1 min-w-0">
-                          <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
-                          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{t.bacteria || 'Various organisms'}</div>
+              const molProjects = approvedTopics.filter(t => t.estimatedCost?.hasMolecular);
+              const phenoProjects = approvedTopics.filter(t => !t.estimatedCost?.hasMolecular);
+              return approvedTopics.length === 0 ? (
+                <div className="empty-state"><FlaskConical size={40} style={{ color: 'var(--text-3)', opacity: 0.3 }} /><div className="es-title">No approved projects</div><div className="es-desc">Approve topics to plan lab work and resource allocation.</div></div>
+              ) : (
+                <>
+                  {molProjects.length > 0 && (
+                    <>
+                      <div className="section-label">Molecular Projects ({molProjects.length})</div>
+                      {molProjects.map((t, i) => (
+                        <div key={i} style={{ padding: '0.75rem 0', borderBottom: '1px solid var(--bg-input)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div><div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{t.title.slice(0, 65)}...</div><div style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>{t.bacteria || ''} · {t.estimatedCost?.total || 'N/A'}</div></div>
+                            <span className="badge badge-molecular">PCR</span>
+                          </div>
+                          {t.gelSharing && (
+                            <div style={{ marginTop: '0.5rem', padding: '0.6rem 0.75rem', background: 'var(--primary-dim)', borderRadius: 6, border: '1px solid var(--primary-border)' }}>
+                              <div style={{ fontFamily: 'var(--mono)', fontSize: '0.65rem', color: 'var(--text)', marginBottom: '0.25rem', overflowX: 'auto', whiteSpace: 'nowrap' }}>{t.gelSharing.laneLayout}</div>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--primary)', lineHeight: 1.45 }}>{t.gelSharing.fairnessTip}</div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Gel Fairness Guide */}
+                      <div style={{ marginTop: '1.5rem' }}>
+                        <div className="section-label">Gel Fairness Allocation</div>
+                        <div style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                          <div style={{ padding: '1rem 1.15rem', borderBottom: '1px solid var(--bg-input)' }}>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.65 }}>
+                              When students share gel trays, lanes closest to the DNA ladder produce the clearest, most publishable results. Students assigned to distant lanes get lower-quality bands through no fault of their own.
+                            </p>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--primary)', lineHeight: 1.65, marginTop: '0.35rem', fontWeight: 600 }}>
+                              Solution: Rotate ladder-adjacent positions across gel runs so every student gets at least one high-resolution lane.
+                            </p>
+                          </div>
+                          <div style={{ padding: '0.85rem 1.15rem', background: 'var(--bg)' }}>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: '0.4rem' }}>15-well gel — optimal layout</div>
+                            <div style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: 'var(--text)', lineHeight: 1.8 }}>
+                              <div><span style={{ color: 'var(--primary)', fontWeight: 600 }}>Run 1:</span> [L] [NC] [<b>S1</b>] [<b>S2</b>] [S3] [S4] [S5] [S6] [S7] [S8] [S9] [S10] [S11] [S12] [PC]</div>
+                              <div><span style={{ color: 'var(--primary)', fontWeight: 600 }}>Run 2:</span> [L] [NC] [<b>S3</b>] [<b>S4</b>] [S5] [S6] [S1] [S2] [S7] [S8] [S9] [S10] [S11] [S12] [PC]</div>
+                              <div><span style={{ color: 'var(--primary)', fontWeight: 600 }}>Run 3:</span> [L] [NC] [<b>S5</b>] [<b>S6</b>] [S7] [S8] [S9] [S10] [S1] [S2] [S3] [S4] [S11] [S12] [PC]</div>
+                            </div>
+                            <p style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '0.4rem' }}>L = Ladder · NC = Negative Control · PC = Positive Control · <b>Bold</b> = priority lanes (best resolution)</p>
+                          </div>
                         </div>
                       </div>
-                    ))}
+
+                      <div style={{ marginTop: '1rem' }}>
+                        <Callout color="sage" title="Gel Layout Optimizer" text={`${molProjects.length} molecular project${molProjects.length > 1 ? 's' : ''} × ~13 samples/gel (15-well) = ${Math.ceil((molProjects.length * 13) / 13)} gel(s) minimum. Batch all samples in one session to share reagents and ladder costs.`} />
+                      </div>
+                    </>
+                  )}
+
+                  {phenoProjects.length > 0 && (
+                    <div style={{ marginTop: molProjects.length > 0 ? '2rem' : 0 }}>
+                      <div className="section-label">Phenotypic Projects ({phenoProjects.length})</div>
+                      {phenoProjects.map((t, i) => (
+                        <div key={i} style={{ padding: '0.65rem 0', borderBottom: '1px solid var(--bg-input)', display: 'flex', justifyContent: 'space-between' }}>
+                          <div><div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{t.title.slice(0, 65)}...</div><div style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>{t.bacteria || ''} · {t.estimatedCost?.total || 'N/A'}</div></div>
+                          <span className="badge badge-beginner">Culture</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <Callout color="amber" title="Cost-Saving Tips" text={`Share master mix across projects. Pool primers for common targets. Batch sequencing submissions. Share buffer solutions between runs.${molProjects.length > 1 ? ` With ${molProjects.length} molecular projects, sharing a single DNA ladder across gel runs saves ₦${(35 * (molProjects.length - 1)).toLocaleString()}K–₦${(50 * (molProjects.length - 1)).toLocaleString()}K.` : ''}`} />
                   </div>
-                  <Callout color="blue" icon="🧬" title="Gel Layout Optimizer" text={`Standard gel = 15 wells. Wells 1 & 8 for DNA ladders → 13 sample wells/gel.\nProjects: ${mol.length} · Est. samples/project: ~20–50\nGels needed: ~${Math.ceil(mol.length * 35 / 13)}\nBatch projects with similar primer sets for max efficiency.`} />
-                  <Callout color="sage" icon="💡" title="Cost-Saving Tips" text={`• Share PCR master mix across projects — buy 500-rxn kit if 3+ need it\n• Pool primer orders for minimum qty discounts\n• Book NIMR sequencing as a batch\n• Run gels back-to-back to share buffer`} />
-                </div>
+                </>
               );
             })()}
-          </section>
+          </>
+        )}
+
+        {/* ── Proposal Modal ── */}
+        {proposalModal && (
+          <div className="modal-overlay" onClick={() => setProposalModal(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Research Proposal</h3>
+                <button onClick={() => setProposalModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)' }}><X size={18} /></button>
+              </div>
+              <div className="modal-body">{proposalModal.content}</div>
+              <div className="modal-footer">
+                <button onClick={() => { navigator.clipboard.writeText(proposalModal.content); addToast('Proposal copied'); }} className="act-btn primary"><Copy size={12} /> Copy</button>
+                <button onClick={() => setProposalModal(null)} className="act-btn">Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Toasts ── */}
+        {toasts.length > 0 && (
+          <div className="toast-container">
+            {toasts.map(t => <div key={t.id} className={`toast ${t.type}`}>{t.type === 'success' ? <Check size={14} /> : null}{t.msg}</div>)}
+          </div>
         )}
       </main>
-
-      {/* ═══ PROPOSAL MODAL ═══ */}
-      {proposalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.4)' }} onClick={() => setProposalModal(null)}>
-          <div className="rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6" style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border)' }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-start justify-between mb-4">
-              <h2 style={{ fontFamily: "'Literata', serif", fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>Research Proposal</h2>
-              <button onClick={() => setProposalModal(null)}><X size={18} style={{ color: 'var(--text-muted)' }} /></button>
-            </div>
-            <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.78rem', lineHeight: 1.65, color: 'var(--text-secondary)', fontFamily: "'Nunito Sans', sans-serif" }}>{proposalModal.text}</pre>
-            <div className="flex gap-2 mt-4 pt-4" style={{ borderTop: '1.5px solid var(--border)' }}>
-              <button onClick={() => { navigator.clipboard.writeText(proposalModal.text); showToast('Copied!'); }} className="act-btn primary"><Copy size={12} /> Copy</button>
-              <button onClick={() => setProposalModal(null)} className="act-btn">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ TOASTS ═══ */}
-      <div className="fixed bottom-6 right-6 z-50 space-y-2">
-        {toasts.map(t => (
-          <div key={t.id} className="toast px-4 py-2.5 rounded-lg shadow-lg" style={{ fontSize: '0.82rem', fontWeight: 600, background: t.type === 'info' ? 'var(--bg-card)' : 'var(--sage)', color: t.type === 'info' ? 'var(--text)' : '#fff', border: t.type === 'info' ? '1.5px solid var(--border)' : 'none' }}>
-            {t.message}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════
-// SHARED COMPONENTS
-// ═══════════════════════════════════════
-
-function DetailLabel({ children }) {
-  return <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>{children}</div>;
-}
-
-function DetailSection({ title, text }) {
-  return <div><DetailLabel>{title}</DetailLabel><p style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>{text}</p></div>;
-}
-
-function InfoBox({ label, value }) {
-  return (
-    <div className="info-box">
-      <div style={{ fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>{label}</div>
-      <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{value}</div>
-    </div>
-  );
-}
-
-function InfoCard({ icon, label, value }) {
-  return (
-    <div className="p-3 rounded-lg" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
-      <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>{icon} {label}</div>
-      <div style={{ fontSize: '0.8rem', color: 'var(--text)', lineHeight: 1.5 }}>{value}</div>
-    </div>
-  );
-}
-
-function ListBox({ title, items }) {
-  return (
-    <div><DetailLabel>{title}</DetailLabel>
-      <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-        {items.map((item, i) => <div key={i} style={{ display: 'flex', gap: '0.35rem' }}><span style={{ color: 'var(--text-muted)' }}>•</span>{item}</div>)}
-      </div>
-    </div>
-  );
-}
-
-function Callout({ color, icon, title, text }) {
-  const colors = {
-    sage: { bg: 'var(--sage-dim)', border: 'var(--sage-border)', title: 'var(--sage)', text: 'rgba(90, 122, 82, 0.75)' },
-    amber: { bg: 'var(--amber-dim)', border: 'var(--amber-border)', title: 'var(--amber)', text: 'rgba(184, 134, 11, 0.75)' },
-    blue: { bg: 'var(--blue-dim)', border: 'var(--blue-border)', title: 'var(--blue)', text: 'rgba(74, 111, 165, 0.75)' },
-    accent: { bg: 'var(--accent-dim)', border: 'var(--accent-border)', title: 'var(--accent)', text: 'rgba(196, 88, 42, 0.75)' },
-  };
-  const c = colors[color] || colors.sage;
-  return (
-    <div className="callout" style={{ background: c.bg, border: `1px solid ${c.border}` }}>
-      <div style={{ fontSize: '0.74rem', fontWeight: 700, color: c.title, marginBottom: '0.25rem' }}>{icon} {title}</div>
-      <p style={{ fontSize: '0.72rem', color: c.text, whiteSpace: 'pre-line', lineHeight: 1.55 }}>{text}</p>
-    </div>
-  );
-}
-
-function EmptyState({ icon, title, desc }) {
-  return (
-    <div className="text-center py-16">
-      <div style={{ color: 'var(--text-muted)', opacity: 0.3, display: 'inline-flex', marginBottom: '1rem' }}>{icon}</div>
-      <p style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{title}</p>
-      <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{desc}</p>
-    </div>
-  );
-}
-
-function StatCard({ label, value, color }) {
-  return (
-    <div className="p-3 rounded-xl text-center" style={{ background: `var(--${color}-dim)` }}>
-      <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>{label}</div>
-      <div className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, color: `var(--${color})` }}>{value}</div>
     </div>
   );
 }
