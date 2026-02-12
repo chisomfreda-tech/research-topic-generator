@@ -81,6 +81,24 @@ COST ESTIMATION (CRITICAL - realistic 2024/2025 Nigerian Naira):
 Reference prices: Mueller Hinton Agar 500g: ₦85K-120K · Nutrient Agar 500g: ₦45K-70K · Blood Agar Base 500g: ₦90K-130K · MacConkey Agar 500g: ₦55K-80K · Antibiotic disc cartridges (50): ₦25K-40K · Petri dishes (20): ₦15K-25K · Sterile swabs (100): ₦8K-15K · Specimen containers (50): ₦10K-18K · Gram stain kit: ₦15K-25K · API 20E: ₦45K-65K · PCR Master Mix (200 rxn): ₦180K-250K · Gel electrophoresis: ₦80K-120K · DNA ladder: ₦35K-50K · Primers (pair): ₦15K-25K · PPE gloves box: ₦8K-15K
 Typical: Phenotypic ₦250K-400K · Molecular ₦500K-800K
 
+GEL SHARING (if molecular): When hasMolecular is true, include a "gelSharing" field with how many students can share a single gel tray, optimal lane positions relative to the DNA ladder, and tips for fair allocation so no student's results are disadvantaged by lane placement.
+
+LAYMAN EXPLANATION (CRITICAL): The "layman" field must be written in culturally grounded Nigerian English that connects the science to everyday Nigerian life. Do NOT write generic science summaries. Reference Nigerian foods, markets, traditions, local context, or daily realities. Examples:
+- GOOD: "Testing whether bitter leaf — the vegetable your mama puts in egusi soup — can kill dangerous bacteria that antibiotics no longer work on. Wound samples from Lagos hospitals."
+- GOOD: "Checking if the suya spots in Yaba are safe — testing the meat for bacteria that cause food poisoning, and whether the spices actually help kill germs."  
+- GOOD: "Finding out which antibiotics still work against the bacteria causing UTIs in Lagos women, so doctors stop prescribing ones that don't work anymore."
+- BAD: "Investigating the antimicrobial properties of plant extracts against resistant organisms." (too generic, no Nigerian grounding)
+- BAD: "Testing a traditional plant for antibacterial activity." (could be anywhere in the world)
+The layman field should make a student's mother or a market trader understand what her child is researching and why it matters for Nigeria.
+
+ABSTRACT TEMPLATE (CRITICAL): Each topic MUST include an "abstractTemplate" field. This is a structured starting point that teaches the student how to write their research abstract. It should follow this format and fill in the topic-specific content, leaving blanks [___] where the student fills in their own results. The template teaches by example — showing the student the correct academic structure while making it impossible to plagiarize since they must insert their own findings. Include these sections:
+- "background": 1-2 sentences setting up why this matters (filled in)
+- "objective": The aim statement using proper academic phrasing (filled in)  
+- "methods": Brief methodology summary (filled in based on the topic)
+- "resultsTemplate": A sentence with blanks for the student to fill in, e.g. "Of the [___] samples collected, [___]% tested positive for [organism]. The highest resistance was observed against [___] ([___]%), while [___] showed the highest sensitivity ([___]%)."
+- "conclusionTemplate": A sentence with blanks, e.g. "This study [confirms/reveals] that [___]. Based on these findings, [___] is recommended for [___]."
+- "formatNotes": Brief tips like "Keep abstract under 300 words. State your sample size and statistical test used. Always include p-values."
+
 Respond ONLY with valid JSON:
 {
   "topics": [
@@ -101,6 +119,11 @@ Respond ONLY with valid JSON:
         "costLevel": "low|medium|high",
         "hasMolecular": false
       },
+      "gelSharing": {
+        "studentsPerGel": 4,
+        "laneLayout": "L | NC | S1 | S2 | S3 | S4 | S5 | S6 | ...",
+        "fairnessTip": "Rotate ladder-adjacent positions between students across runs. Students in lanes 2-4 get best resolution — alternate who gets these positions."
+      },
       "statisticalAnalysis": {
         "studyDesign": "Cross-sectional / Case-control",
         "sampleSizeCalculation": "Formula",
@@ -120,13 +143,22 @@ Respond ONLY with valid JSON:
       "estimatedDuration": "X months",
       "uniquenessScore": 8,
       "uniquenessReason": "What makes it novel",
-      "layman": "Plain-English explanation a non-scientist would understand, 1-2 sentences. Example: 'Testing whether a traditional Nigerian plant can help existing antibiotics work better against drug-resistant bacteria found in urine infections'",
+      "layman": "Culturally grounded Nigerian plain-English explanation (see LAYMAN EXPLANATION instructions above)",
       "similarStudies": "Known similar or none",
-      "supervisorNotes": "Key things to watch"
+      "supervisorNotes": "Key things to watch",
+      "abstractTemplate": {
+        "background": "Filled background sentence(s) specific to this topic",
+        "objective": "Filled aim statement in proper academic phrasing",
+        "methods": "Filled brief methodology summary",
+        "resultsTemplate": "Sentence with [___] blanks for student to fill with their actual results",
+        "conclusionTemplate": "Sentence with [___] blanks for student to fill with their conclusions",
+        "formatNotes": "Tips on abstract length, what to include, common mistakes"
+      }
     }
   ]
 }
-If no interview needed, set interviewRequired: false and interviewQuestions: null.`;
+If no interview needed, set interviewRequired: false and interviewQuestions: null.
+If hasMolecular is false, set gelSharing to null.`;
 }
 
 export function buildRegeneratePrompt({ currentTitle, focusArea, equipment, timeline }) {
@@ -136,6 +168,14 @@ Replace: "${currentTitle}"
 Keep similar theme but DIFFERENT. Timeline: ${timeline || 8} months.
 Available equipment: ${equipNames.join(', ') || 'Basic lab only'}.
 Include Nigerian Naira cost estimates.
+
+LAYMAN FIELD: Write in culturally grounded Nigerian English that connects science to everyday Nigerian life. Reference Nigerian foods, markets, traditions, or daily realities. A student's mother or a market trader should understand what is being researched and why it matters. NOT generic science summaries.
+
+ABSTRACT TEMPLATE: Include an "abstractTemplate" object with: "background" (filled), "objective" (filled), "methods" (filled), "resultsTemplate" (sentence with [___] blanks for student's own data), "conclusionTemplate" (sentence with [___] blanks), "formatNotes" (tips on length/structure).
+
+If hasMolecular is true, include "gelSharing" with studentsPerGel, laneLayout, and fairnessTip for equitable lane allocation.
+If hasMolecular is false, set gelSharing to null.
+
 Respond ONLY with valid JSON for ONE topic (same full format as original generator).`;
 }
 
