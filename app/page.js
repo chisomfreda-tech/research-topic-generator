@@ -369,7 +369,7 @@ export default function App() {
         </div>
         <ChevronDown size={14} className={`collapse-icon ${sections[id] ? 'open' : ''}`} />
       </div>
-      {sections[id] && <div className="fade-in">{children}</div>}
+      {sections[id] && <div>{children}</div>}
     </div>
   );
 
@@ -407,9 +407,10 @@ export default function App() {
         <div className="flex">
           <div style={{ width: 4, borderRadius: '2px 0 0 2px', background: areaColor, flexShrink: 0 }} />
           <div className="flex-1">
+            {/* ── Collapsed header ── */}
             <div className="p-4 cursor-pointer" onClick={() => setExpandedTopic(isOpen ? null : key)}>
               <div className="flex items-start justify-between gap-3">
-                <h3 style={{ fontSize: '0.86rem', fontWeight: 600, lineHeight: 1.4, color: 'var(--text)' }}>{topic.title}</h3>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, lineHeight: 1.4, color: 'var(--text)', fontFamily: "'Literata', serif" }}>{topic.title}</h3>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   {topic.difficulty && <span className={`badge badge-${topic.difficulty}`}>{topic.difficulty}</span>}
                   {topic.estimatedCost?.costLevel && <span className={`badge badge-${topic.estimatedCost.costLevel}`}>{topic.estimatedCost.total}</span>}
@@ -417,6 +418,12 @@ export default function App() {
                   {isOpen ? <ChevronUp size={14} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />}
                 </div>
               </div>
+              {/* Layman language */}
+              {topic.layman && (
+                <p style={{ fontSize: '0.82rem', color: 'var(--accent)', marginTop: '0.4rem', lineHeight: 1.5, fontStyle: 'italic' }}>
+                  In plain language: {topic.layman}
+                </p>
+              )}
               <p style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '0.3rem', lineHeight: 1.55 }}>{topic.description}</p>
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {topic.bacteria && <span className="badge badge-bacteria">{topic.bacteria}</span>}
@@ -425,68 +432,140 @@ export default function App() {
               </div>
             </div>
 
+            {/* ── Expanded content ── */}
             {isOpen && (
-              <div className="px-4 pb-4 space-y-4" style={{ borderTop: '1.5px solid var(--border)' }}>
-                <div className="pt-3" />
-                {topic.background && <DetailSection title="Background" text={topic.background} />}
-                {topic.objectives?.length > 0 && (
-                  <div><DetailLabel>Objectives</DetailLabel>
-                    <ol style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', listStyleType: 'decimal', paddingLeft: '1.2rem' }}>
-                      {topic.objectives.map((o, i) => <li key={i} style={{ marginBottom: '0.2rem' }}>{o}</li>)}
-                    </ol>
+              <div className="px-4 pb-4 space-y-5" style={{ borderTop: '1.5px solid var(--border)' }}>
+                <div className="pt-4" />
+
+                {/* Background */}
+                {topic.background && (
+                  <div className="p-4 rounded-lg" style={{ background: 'var(--bg-hover)', borderLeft: '3px solid var(--blue)' }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--blue)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      📖 Background
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.65 }}>{topic.background}</p>
                   </div>
                 )}
-                {topic.methodology && <DetailSection title="Methodology" text={topic.methodology} />}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {topic.sampleSource && <InfoBox label="Source" value={topic.sampleSource} />}
-                  {topic.sampleType && <InfoBox label="Sample Type" value={topic.sampleType} />}
-                  {topic.sampleSize && <InfoBox label="Sample Size" value={topic.sampleSize} />}
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {topic.materials?.length > 0 && <ListBox title="Materials" items={topic.materials} />}
-                  {topic.equipment?.length > 0 && <ListBox title="Equipment" items={topic.equipment} />}
-                </div>
-                {topic.estimatedCost?.breakdown?.length > 0 && (
-                  <div><DetailLabel>Cost Breakdown</DetailLabel>
-                    <div style={{ border: '1.5px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
-                      {topic.estimatedCost.breakdown.map((item, i) => (
-                        <div key={i} className="flex justify-between px-3 py-1.5" style={{ fontSize: '0.74rem', background: i % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-hover)', color: 'var(--text-secondary)' }}>
-                          <span>{item.item}</span>
-                          <span className="mono" style={{ fontSize: '0.68rem', color: 'var(--text)' }}>{item.cost}</span>
+
+                {/* Objectives */}
+                {topic.objectives?.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--sage)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      🎯 Objectives
+                    </div>
+                    <div className="space-y-2">
+                      {topic.objectives.map((o, i) => (
+                        <div key={i} className="flex gap-3 items-start">
+                          <span style={{ width: 22, height: 22, borderRadius: 6, background: i === 0 ? 'var(--accent-dim)' : 'var(--bg-input)', color: i === 0 ? 'var(--accent)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.62rem', fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
+                          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>{o}</p>
                         </div>
                       ))}
-                      <div className="flex justify-between px-3 py-2" style={{ fontSize: '0.82rem', fontWeight: 700, background: 'var(--sage-dim)', color: 'var(--sage)', borderTop: '1.5px solid var(--border)' }}>
+                    </div>
+                  </div>
+                )}
+
+                {/* Methodology */}
+                {topic.methodology && (
+                  <div className="p-4 rounded-lg" style={{ background: 'var(--bg-hover)', borderLeft: '3px solid var(--sage)' }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--sage)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      🔬 Methodology
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.65 }}>{topic.methodology}</p>
+                  </div>
+                )}
+
+                {/* Sample info — visual cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {topic.sampleSource && <InfoCard icon="📍" label="Sample Source" value={topic.sampleSource} />}
+                  {topic.sampleType && <InfoCard icon="🧫" label="Sample Type" value={topic.sampleType} />}
+                  {topic.sampleSize && <InfoCard icon="📊" label="Sample Size" value={topic.sampleSize} />}
+                </div>
+
+                {/* Materials & Equipment — side by side with distinct styling */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {topic.materials?.length > 0 && (
+                    <div className="p-3 rounded-lg" style={{ background: 'var(--amber-dim)', border: '1px solid var(--amber-border)' }}>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--amber)', marginBottom: '0.4rem' }}>🧪 Materials</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                        {topic.materials.map((item, i) => <div key={i}>• {item}</div>)}
+                      </div>
+                    </div>
+                  )}
+                  {topic.equipment?.length > 0 && (
+                    <div className="p-3 rounded-lg" style={{ background: 'var(--blue-dim)', border: '1px solid var(--blue-border)' }}>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--blue)', marginBottom: '0.4rem' }}>⚙️ Equipment</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                        {topic.equipment.map((item, i) => <div key={i}>• {item}</div>)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cost Breakdown */}
+                {topic.estimatedCost?.breakdown?.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--sage)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      💰 Cost Breakdown
+                    </div>
+                    <div style={{ border: '1.5px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                      {topic.estimatedCost.breakdown.map((item, i) => (
+                        <div key={i} className="flex justify-between px-4 py-2" style={{ fontSize: '0.8rem', background: i % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-hover)', color: 'var(--text-secondary)' }}>
+                          <span>{item.item}</span>
+                          <span className="mono" style={{ fontWeight: 600, color: 'var(--text)' }}>{item.cost}</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between px-4 py-3" style={{ fontSize: '0.88rem', fontWeight: 700, background: 'var(--sage-dim)', color: 'var(--sage)', borderTop: '1.5px solid var(--border)' }}>
                         <span>Total</span><span>{topic.estimatedCost.total}</span>
                       </div>
                     </div>
                   </div>
                 )}
+
+                {/* Statistical Analysis */}
                 {topic.statisticalAnalysis && (
-                  <div><DetailLabel>Statistical Analysis</DetailLabel>
-                    <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }} className="space-y-1">
-                      <p><strong style={{ color: 'var(--text-muted)' }}>Design:</strong> {topic.statisticalAnalysis.studyDesign}</p>
-                      <p><strong style={{ color: 'var(--text-muted)' }}>Sample Calc:</strong> {topic.statisticalAnalysis.sampleSizeCalculation}</p>
-                      <p><strong style={{ color: 'var(--text-muted)' }}>Tests:</strong> {(topic.statisticalAnalysis.tests || []).join(', ')}</p>
-                      <p><strong style={{ color: 'var(--text-muted)' }}>Software:</strong> {topic.statisticalAnalysis.software}</p>
+                  <div className="p-4 rounded-lg" style={{ background: 'var(--bg-hover)', borderLeft: '3px solid var(--purple)' }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--purple)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      📈 Statistical Analysis
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2" style={{ fontSize: '0.8rem' }}>
+                      <div><span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.68rem' }}>Design</span><br /><span style={{ color: 'var(--text)' }}>{topic.statisticalAnalysis.studyDesign}</span></div>
+                      <div><span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.68rem' }}>Software</span><br /><span style={{ color: 'var(--text)' }}>{topic.statisticalAnalysis.software}</span></div>
+                      <div style={{ gridColumn: 'span 2' }}><span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.68rem' }}>Sample Calculation</span><br /><span className="mono" style={{ color: 'var(--text)', fontSize: '0.76rem' }}>{topic.statisticalAnalysis.sampleSizeCalculation}</span></div>
+                      <div style={{ gridColumn: 'span 2' }}><span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.68rem' }}>Tests</span><br /><span style={{ color: 'var(--text)' }}>{(topic.statisticalAnalysis.tests || []).join(' · ')}</span></div>
                     </div>
                   </div>
                 )}
+
+                {/* Interview Questions */}
                 {topic.interviewRequired && topic.interviewQuestions && (
-                  <div><DetailLabel>Interview Questions</DetailLabel>
-                    {topic.interviewQuestions.consentQuestions?.length > 0 && (
-                      <div className="mb-2"><div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--amber)', marginBottom: '0.25rem' }}>Consent</div>
-                        {topic.interviewQuestions.consentQuestions.map((q, i) => <div key={i} style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>• {q}</div>)}</div>
-                    )}
-                    {topic.interviewQuestions.methodologyQuestions?.length > 0 && (
-                      <div><div style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--blue)', marginBottom: '0.25rem' }}>Methodology</div>
-                        {topic.interviewQuestions.methodologyQuestions.map((q, i) => <div key={i} style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>• {q}</div>)}</div>
-                    )}
+                  <div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      🗣️ Interview Questions
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {topic.interviewQuestions.consentQuestions?.length > 0 && (
+                        <div className="p-3 rounded-lg" style={{ background: 'var(--amber-dim)', border: '1px solid var(--amber-border)' }}>
+                          <div style={{ fontSize: '0.66rem', fontWeight: 700, color: 'var(--amber)', marginBottom: '0.3rem' }}>Consent</div>
+                          {topic.interviewQuestions.consentQuestions.map((q, i) => <div key={i} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '0.2rem' }}>• {q}</div>)}
+                        </div>
+                      )}
+                      {topic.interviewQuestions.methodologyQuestions?.length > 0 && (
+                        <div className="p-3 rounded-lg" style={{ background: 'var(--blue-dim)', border: '1px solid var(--blue-border)' }}>
+                          <div style={{ fontSize: '0.66rem', fontWeight: 700, color: 'var(--blue)', marginBottom: '0.3rem' }}>Methodology</div>
+                          {topic.interviewQuestions.methodologyQuestions.map((q, i) => <div key={i} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '0.2rem' }}>• {q}</div>)}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
+
+                {/* Callouts */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {topic.ethicalConsiderations && <Callout color="amber" icon="⚠️" title="Ethical Considerations" text={topic.ethicalConsiderations} />}
                   {topic.supervisorNotes && <Callout color="blue" icon="📋" title="Supervisor Notes" text={topic.supervisorNotes} />}
                 </div>
+
+                {/* Uniqueness */}
                 {topic.uniquenessCheck && <Callout color="sage" icon="🔍" title={`Uniqueness: ${topic.uniquenessCheck.score}/10`} text={`${topic.uniquenessCheck.reason}${topic.uniquenessCheck.suggestions ? `\n\n💡 ${topic.uniquenessCheck.suggestions}` : ''}`} />}
 
                 {/* Actions */}
@@ -1037,6 +1116,15 @@ function InfoBox({ label, value }) {
     <div className="info-box">
       <div style={{ fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>{label}</div>
       <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{value}</div>
+    </div>
+  );
+}
+
+function InfoCard({ icon, label, value }) {
+  return (
+    <div className="p-3 rounded-lg" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)' }}>
+      <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>{icon} {label}</div>
+      <div style={{ fontSize: '0.8rem', color: 'var(--text)', lineHeight: 1.5 }}>{value}</div>
     </div>
   );
 }

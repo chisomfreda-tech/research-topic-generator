@@ -35,6 +35,7 @@
 }
 
 * { box-sizing: border-box; }
+html { overflow-y: scroll; }
 body { background: var(--bg); color: var(--text); font-family: 'Nunito Sans', sans-serif; -webkit-font-smoothing: antialiased; }
 
 ::-webkit-scrollbar { width: 6px; }
