@@ -12,7 +12,7 @@ export async function POST(req) {
       equipment: body.equipment || [],
       timeline: body.timeline || '8',
     });
-    const text = await callClaude(prompt, { maxTokens: 8192 });
+    const text = await callClaude(prompt, { maxTokens: 4096, model: 'claude-haiku-4-5-20251001' });
     const data = parseJSON(text);
     const topic = data.topics ? data.topics[0] : data;
     return NextResponse.json({ topic });
