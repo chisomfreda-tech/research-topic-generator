@@ -43,6 +43,33 @@ export const BACTERIA_OPTIONS = [
   { id: 'prevotella', name: 'Prevotella species', common: 'Prevotella spp.', anaerobe: true },
 ];
 
+export function buildSingleTopicPrompt({ selectedAreas, selectedBacteria, selectedDemographic, equipment, timeline, maxBudget, customNotes, customFocusArea, customBacteria, existingTitles = [] }) {
+  const areas = (selectedAreas || []).map(id => FOCUS_AREAS.find(a => a.id === id)?.label).filter(Boolean).join(', ');
+  const bacteria = (selectedBacteria || []).length > 0 ? (selectedBacteria || []).map(id => BACTERIA_OPTIONS.find(x => x.id === id)?.common).filter(Boolean).join(', ') : '';
+  const equip = (equipment || []).map(id => EQUIPMENT_LIST.find(e => e.id === id)?.name).filter(Boolean).join(', ');
+  const existing = (existingTitles || []).length > 0 ? `\nDO NOT REPEAT: ${existingTitles.join(' | ')}` : '';
+  const budget = maxBudget && maxBudget !== 'any' ? ` Budget under ₦${parseInt(maxBudget).toLocaleString()}.` : '';
+
+  return `Generate 1 EXPERIMENTAL microbiology research topic for a Nigerian university student in Lagos.${budget}
+Timeline: ${timeline || '8'} months. Demographic: ${selectedDemographic || 'General'}.
+Focus: ${areas}${customFocusArea ? ', ' + customFocusArea : ''}
+${bacteria ? 'Bacteria: ' + bacteria + (customBacteria ? ', ' + customBacteria : '') : ''}
+Equipment ONLY: ${equip || 'Basic lab'}
+${customNotes ? 'Notes: ' + customNotes : ''}${existing}
+
+Rules: Experimental only. Feasible in Lagos. No ICU samples. Nigerian Naira costs.
+Naira refs: MHA 500g ₦85-120K, Nutrient Agar ₦45-70K, Antibiotic discs(50) ₦25-40K, Petri(20) ₦15-25K, Swabs(100) ₦8-15K, PCR Master Mix ₦180-250K, Gel kit ₦80-120K, DNA ladder ₦35-50K.
+
+"layman" field: Write in Nigerian English connecting science to daily life. E.g. "Testing whether bitter leaf — the vegetable in egusi soup — can kill bacteria that antibiotics no longer work on." NOT generic science language.
+
+"abstractTemplate": Include background (filled), objective (filled), methods (filled), resultsTemplate (with [___] blanks for student data), conclusionTemplate (with [___] blanks), formatNotes.
+
+If hasMolecular: include "gelSharing" with studentsPerGel, laneLayout, fairnessTip. If not: gelSharing=null.
+
+Respond ONLY with valid JSON (no markdown):
+{"topics":[{"title":"...","description":"...","background":"...","objectives":["..."],"methodology":"...","sampleSource":"...","sampleType":"...","sampleSize":"...with formula","materials":["..."],"equipment":["..."],"estimatedCost":{"total":"₦X–₦Y","breakdown":[{"item":"...","cost":"₦X"}],"costLevel":"low|medium|high","hasMolecular":false},"gelSharing":null,"statisticalAnalysis":{"studyDesign":"...","sampleSizeCalculation":"...","variables":{"independent":["..."],"dependent":["..."]},"tests":["..."],"software":"...","significanceLevel":"p<0.05"},"interviewRequired":false,"interviewQuestions":null,"ethicalConsiderations":"...","keywords":["..."],"difficulty":"beginner|intermediate|advanced","difficultyReason":"...","focusArea":"plant|amr|food|clinical","bacteria":"...","estimatedDuration":"...","uniquenessScore":8,"uniquenessReason":"...","layman":"Nigerian English explanation","similarStudies":"...","supervisorNotes":"...","abstractTemplate":{"background":"...","objective":"...","methods":"...","resultsTemplate":"Of the [___] samples, [___]% tested positive...","conclusionTemplate":"This study [confirms/reveals] that [___]...","formatNotes":"..."}}]}`;
+}
+
 export function buildGeneratePrompt({ selectedAreas, selectedBacteria, selectedDemographic, equipment, timeline, numTopics, maxBudget, customNotes, customFocusArea, customBacteria, existingTitles = [] }) {
   const areas = selectedAreas.map(id => FOCUS_AREAS.find(a => a.id === id)).filter(Boolean).map(a => `${a.label}: ${a.context}`).join('\n');
   const bacteria = selectedBacteria?.length > 0 ? `\nBACTERIA FOCUS:\n${selectedBacteria.map(id => { const b = BACTERIA_OPTIONS.find(x => x.id === id); return b ? `- ${b.name} (${b.common})${b.anaerobe ? ' [ANAEROBE]' : ''}` : ''; }).filter(Boolean).join('\n')}` : '';

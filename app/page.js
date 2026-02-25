@@ -183,10 +183,12 @@ export default function ResearchTopicGenerator() {
     loadingInterval.current = setInterval(() => setLoadingMsgIdx(p => (p + 1) % LOADING_MESSAGES.length), 4000);
 
     const generated = [];
+    let lastError = '';
     for (let i = 0; i < numTopics; i++) {
       try {
         const res = await fetch('/api/generate-one', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
           body: JSON.stringify({
             selectedAreas, selectedBacteria, selectedDemographic: selectedDemographic,
             equipment, timeline, numTopics: 1, maxBudget, customNotes, customFocusArea, customBacteria,
@@ -194,9 +196,9 @@ export default function ResearchTopicGenerator() {
           }),
         });
         if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          // If one fails, keep going with what we have
-          console.error(`Topic ${i + 1} failed:`, errData.error);
+          lastError = `Status ${res.status}`;
+          try { const errData = await res.json(); lastError = errData.error || lastError; } catch {}
+          console.error(`Topic ${i + 1} failed: ${lastError}`);
           continue;
         }
         const data = await res.json();
@@ -206,13 +208,14 @@ export default function ResearchTopicGenerator() {
           setLoadingCount(generated.length);
         }
       } catch (e) {
-        console.error(`Topic ${i + 1} error:`, e.message);
+        lastError = e.message || 'Network error';
+        console.error(`Topic ${i + 1} error: ${lastError}`);
         continue;
       }
     }
     clearInterval(loadingInterval.current);
     setLoading(false);
-    if (generated.length === 0) setError('All topics failed to generate. Try again.');
+    if (generated.length === 0) setError(`Topics failed to generate (v2). ${lastError}`);
   }
 
   async function regenerateTopic(idx) {
